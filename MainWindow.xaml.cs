@@ -176,12 +176,12 @@ namespace Vision_OpenCV_App
                 _isDragging = false;
                 Cursor = Cursors.Arrow;
             }
-            else if(_isRoiDrawing)
+            else if(_isRoiDrawing && e.ChangedButton == MouseButton.Left)
             {
                 _isRoiDrawing = false;
                 ImgCanvas.ReleaseMouseCapture();
 
-                double x = Math.Min(_roiStartPoint.X, RoiRect.Tag is Point p ? p.X : 0);
+                //double x = Math.Min(_roiStartPoint.X, RoiRect.Tag is Point p ? p.X : 0);
             }
         }
 
