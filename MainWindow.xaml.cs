@@ -21,6 +21,19 @@ namespace Vision_OpenCV_App
         Rectangle
     }
 
+    public enum ResizeDirection
+    {
+        None,
+        TopLeft,
+        TopRight,
+        BottomLeft,
+        BottomRight,
+        Top,    // 상
+        Bottom, // 하
+        Left,   // 좌
+        Right   // 우
+    }
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -35,6 +48,10 @@ namespace Vision_OpenCV_App
         private bool _isRoiDrawing = false; // 현재 ROI를 그리고 있는지 여부.
         private Point _roiStartPoint;       // 이미지 기준 좌표: ROI 사각형을 그리기 시작한 점 (클릭한 곳)
         private Rect _currentRoiRect;       // 최종적으로 계산된 ROI 영역 (X, Y, W, H)
+
+        // ROI Resize Handle 관련 변수
+        private bool _isResizing = false;
+        private ResizeDirection _resizeDirection = ResizeDirection.None;
 
         // 그리기 관련 변수
         private DrawingMode _currentDrawMode = DrawingMode.None;
@@ -165,6 +182,26 @@ namespace Vision_OpenCV_App
             RoiRect.Height = screenH;
             Canvas.SetLeft(RoiRect, screenX);   // 부모 캔버스(ImgCanvas) 위에서 RoiRect의 X 위치는 screenX라고 지정.
             Canvas.SetTop(RoiRect, screenY);    // 부모 캔버스(ImgCanvas) 위에서 RoiRect의 Y 위치는 screenY라고 지정.
+
+            // Resize Handle 위치 업데이트
+            UpdateResizeHandle(Handle_TL, screenX, screenY);
+            UpdateResizeHandle(Handle_TR, screenX + screenW, screenY);
+            UpdateResizeHandle(Handle_BL, screenX, screenY + screenH);
+            UpdateResizeHandle(Handle_BR, screenX + screenW, screenY + screenH);
+
+            // 상하좌우 핸들은 각 변의 중앙에 위치
+            UpdateResizeHandle(Handle_Top, screenX + screenW / 2, screenY);
+            UpdateResizeHandle(Handle_Bottom, screenX + screenW / 2, screenY + screenH);
+            UpdateResizeHandle(Handle_Left, screenX, screenY + screenH / 2);
+            UpdateResizeHandle(Handle_Right, screenX + screenW, screenY + screenH / 2);
+
+        }
+
+        private void UpdateResizeHandle(Rectangle handle, double x, double y)
+        {
+            handle.Visibility = Visibility.Visible;
+            Canvas.SetLeft(handle, x - 5);
+            Canvas.SetTop(handle, y - 5);
         }
 
         private void ZoomBorder_MouseUp(object sender, MouseButtonEventArgs e)
@@ -211,7 +248,7 @@ namespace Vision_OpenCV_App
                 UpdateRoiVisual(_roiStartPoint, currentPos);
             }
 
-                var vm = this.DataContext as MainViewModel;
+            var vm = this.DataContext as MainViewModel;
             if (vm != null)
             {
                 if(ImgView.Source is BitmapSource bitmap)
@@ -296,15 +333,33 @@ namespace Vision_OpenCV_App
             {
                 vm.CropImage((int)_currentRoiRect.X, (int)_currentRoiRect.Y, (int)_currentRoiRect.Width, (int)_currentRoiRect.Height);
 
-                RoiRect.Visibility = Visibility.Collapsed;
+                //RoiRect.Visibility = Visibility.Collapsed;
 
+                HideRoiAndHandles();
                 FitImageToScreen();
             }
         }
 
         private void MenuItem_Save_Click(object sender, RoutedEventArgs e)
         {
+            if(_currentRoiRect.Width <= 0 || _currentRoiRect.Height <= 0) return;
 
+            var vm = this.DataContext as MainViewModel;
+            if(vm != null)
+            {
+                Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+                dlg.Filter = "PNG Image|*.png|JPEG Image|*.jpg;*.jpeg|Bitmap Image|*.bmp|TIFF Image|*.tiff|All Files|*.*";
+                dlg.FileName = "ROI_Image";
+
+                if(dlg.ShowDialog() == true)
+                {
+                    vm.SaveRoiImage(dlg.FileName, (int)_currentRoiRect.X, (int)_currentRoiRect.Y, 
+                        (int)_currentRoiRect.Width, (int)_currentRoiRect.Height);
+
+                    HideRoiAndHandles();
+
+                }
+            }
         }
 
         
@@ -319,6 +374,7 @@ namespace Vision_OpenCV_App
         {
             // 그려진 모든 도형 삭제
             OverlayCanvas.Children.Clear();
+            HideRoiAndHandles();
             _currentDrawMode = DrawingMode.None;
             Cursor = Cursors.Arrow;
         }
@@ -326,6 +382,50 @@ namespace Vision_OpenCV_App
         private void Menu_Fit_Click(object sender, RoutedEventArgs e)
         {
             FitImageToScreen();
+        }
+
+        private void HideRoiAndHandles()
+        {
+            if (RoiRect != null)
+            {
+                RoiRect.Visibility = Visibility.Collapsed;
+                RoiRect.Width = 0;
+                RoiRect.Height = 0;
+            }
+
+
+            if (Handle_TL != null) Handle_TL.Visibility = Visibility.Collapsed;
+            if (Handle_TR != null) Handle_TR.Visibility = Visibility.Collapsed;
+            if (Handle_BL != null) Handle_BL.Visibility = Visibility.Collapsed;
+            if (Handle_BR != null) Handle_BR.Visibility = Visibility.Collapsed;
+            if (Handle_Top != null) Handle_Top.Visibility = Visibility.Collapsed;
+            if (Handle_Bottom != null) Handle_Bottom.Visibility = Visibility.Collapsed;
+            if (Handle_Left != null) Handle_Left.Visibility = Visibility.Collapsed;
+            if (Handle_Right != null) Handle_Right.Visibility = Visibility.Collapsed;
+
+            _currentDrawMode = DrawingMode.None;
+            Cursor = Cursors.Arrow;
+        }
+
+        private void ResizeHandle_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var rect = sender as Rectangle;
+            if(rect == null) return;
+
+            _isResizing = true;
+
+            if(rect == Handle_TL) _resizeDirection = ResizeDirection.TopLeft;
+            else if(rect == Handle_TR) _resizeDirection = ResizeDirection.TopRight;
+            else if(rect == Handle_BL) _resizeDirection = ResizeDirection.BottomLeft;
+            else if(rect == Handle_BR) _resizeDirection = ResizeDirection.BottomRight;
+            else if(rect == Handle_Top) _resizeDirection = ResizeDirection.Top;
+            else if(rect == Handle_Bottom) _resizeDirection = ResizeDirection.Bottom;
+            else if(rect == Handle_Left) _resizeDirection = ResizeDirection.Left;
+            else if(rect == Handle_Right) _resizeDirection = ResizeDirection.Right;
+            else _resizeDirection = ResizeDirection.None;
+
+            ImgCanvas.CaptureMouse();
+            e.Handled = true;
         }
     }
 }
