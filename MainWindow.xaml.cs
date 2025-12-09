@@ -53,6 +53,12 @@ namespace Vision_OpenCV_App
         private bool _isResizing = false;
         private ResizeDirection _resizeDirection = ResizeDirection.None;
 
+        // ROI 사각형 이동 상태관련 변수
+        private bool _isMovingRoi = false;
+        // WPF에서 방향과 크기를 가진 물리량을 표현하기위해 사용하는 구조체.
+        // ROI 사각형을 마우스로 드래그해서 이동시킬 때, "마우스가 움직인 만큼 사각형도 똑같이 움직여야" 합니다.
+        private Vector _moveOffset;         // 클릭한 지점과 사각형 좌상단 사이의 거리(오차)를 저장.
+
         // 그리기 관련 변수
         private DrawingMode _currentDrawMode = DrawingMode.None;
         private Point _drawStartPoint;      // 그리기 시작점 (이미지 좌표)
@@ -138,6 +144,14 @@ namespace Vision_OpenCV_App
                 Point mousePos = e.GetPosition(ImgView);
                 var bitmap  = ImgView.Source as BitmapSource;
 
+                if (RoiRect.Visibility == Visibility.Visible && _currentRoiRect.Contains(mousePos))
+                {
+                    _isMovingRoi = true;
+                    _moveOffset = mousePos - new Point(_currentRoiRect.X, _currentRoiRect.Y);
+
+                    ImgCanvas.CaptureMouse();
+                    return;
+                }
                 if (_currentDrawMode == DrawingMode.Roi)
                 {
                     if (mousePos.X >= 0 && mousePos.X < bitmap.PixelWidth && mousePos.Y >= 0 && mousePos.Y < bitmap.PixelHeight)
@@ -220,6 +234,17 @@ namespace Vision_OpenCV_App
 
                 //double x = Math.Min(_roiStartPoint.X, RoiRect.Tag is Point p ? p.X : 0);
             }
+            else if(_isResizing)
+            {
+                _isResizing = false;
+                _resizeDirection = ResizeDirection.None;
+                ImgCanvas.ReleaseMouseCapture();
+            }
+            else if(_isMovingRoi)
+            {
+                _isMovingRoi = false;
+                ImgCanvas.ReleaseMouseCapture();
+            }
         }
 
         private void ZoomBorder_MouseMove(object sender, MouseEventArgs e)
@@ -234,7 +259,7 @@ namespace Vision_OpenCV_App
                 imgTranslate.X = _origin.X + (v.X - _start.X);
                 imgTranslate.Y = _origin.Y + (v.Y - _start.Y);
             }
-            else if(_isRoiDrawing)
+            else if (_isRoiDrawing)
             {
                 Point currentPos = e.GetPosition(ImgView);
                 var bitmap = ImgView.Source as BitmapSource;
@@ -246,6 +271,111 @@ namespace Vision_OpenCV_App
                 if (currentPos.Y > bitmap.PixelHeight) currentPos.Y = bitmap.PixelHeight;
 
                 UpdateRoiVisual(_roiStartPoint, currentPos);
+
+            }
+            else if (_isResizing && ImgView.Source != null)
+            {
+                var bitmap = ImgView.Source as BitmapSource;
+                Point currentPos = e.GetPosition(ImgView);
+
+                // 이미지 범위 제한
+                if (currentPos.X < 0) currentPos.X = 0;
+                if (currentPos.Y < 0) currentPos.Y = 0;
+                if (currentPos.X > bitmap.PixelWidth) currentPos.X = bitmap.PixelWidth;
+                if (currentPos.Y > bitmap.PixelHeight) currentPos.Y = bitmap.PixelHeight;
+
+                double newX = _currentRoiRect.X;
+                double newY = _currentRoiRect.Y;
+                double newW = _currentRoiRect.Width;
+                double newH = _currentRoiRect.Height;
+
+                // 방향에 따른 좌표 계산
+                switch (_resizeDirection)
+                {
+                    case ResizeDirection.TopLeft:
+                        double right = _currentRoiRect.Right;
+                        double bottom = _currentRoiRect.Bottom;
+
+                        newX = Math.Min(currentPos.X, right - 1);
+                        newY = Math.Min(currentPos.Y, bottom - 1);
+                        newW = right - newX;
+                        newH = bottom - newY;
+                        break;
+
+                    case ResizeDirection.TopRight:
+                        double left = _currentRoiRect.Left;
+                        bottom = _currentRoiRect.Bottom;
+                        newY = Math.Min(currentPos.Y, bottom - 1);
+                        newW = Math.Max(currentPos.X - left, 1);
+                        newH = bottom - newY;
+                        break;
+
+                    case ResizeDirection.BottomLeft:
+                        right = _currentRoiRect.Right;
+                        double top = _currentRoiRect.Top;
+                        newX = Math.Min(currentPos.X, right - 1);
+                        newW = right - newX;
+                        newH = Math.Max(currentPos.Y - top, 1);
+                        break;
+
+                    case ResizeDirection.BottomRight:
+                        left = _currentRoiRect.Left;
+                        top = _currentRoiRect.Top;
+                        newW = Math.Max(currentPos.X - left, 1);
+                        newH = Math.Max(currentPos.Y - top, 1);
+                        break;
+
+                    // [추가] 상하좌우 핸들 로직
+                    case ResizeDirection.Top:
+                        // X, Width 고정 / Y, Height 변경
+                        bottom = _currentRoiRect.Bottom;
+                        newY = Math.Min(currentPos.Y, bottom - 1);
+                        newH = bottom - newY;
+                        break;
+
+                    case ResizeDirection.Bottom:
+                        // X, Width 고정 / Height 변경
+                        top = _currentRoiRect.Top;
+                        newH = Math.Max(currentPos.Y - top, 1);
+                        break;
+
+                    case ResizeDirection.Left:
+                        // Y, Height 고정 / X, Width 변경
+                        right = _currentRoiRect.Right;
+                        newX = Math.Min(currentPos.X, right - 1);
+                        newW = right - newX;
+                        break;
+
+                    case ResizeDirection.Right:
+                        // Y, Height 고정 / Width 변경
+                        left = _currentRoiRect.Left;
+                        newW = Math.Max(currentPos.X - left, 1);
+                        break;
+                }
+
+                UpdateRoiVisual(new Point(newX, newY), new Point(newX + newW, newY + newH));
+
+            }
+
+            else if (_isMovingRoi && ImgView.Source != null)
+            {
+                var bitmap = ImgView.Source as BitmapSource;
+                Point currentPos = e.GetPosition(ImgView);
+
+                // _moveOffset 는 ZoomBorder_MouseDown 메서드에서 저장됨.
+                double newX = currentPos.X - _moveOffset.X;
+                double newY = currentPos.Y - _moveOffset.Y;
+                double w = _currentRoiRect.Width;
+                double h = _currentRoiRect.Height;
+
+                // 이미지 영역 밖으로 나가지 않도록 제한
+                if (newX < 0) newX = 0;
+                if (newY < 0) newY = 0;
+                if (newX + w > bitmap.PixelWidth) newX = bitmap.PixelWidth - w;
+                if (newY + h > bitmap.PixelHeight) newY = bitmap.PixelHeight - h;
+
+                // 이동된 위치로 업데이트
+                UpdateRoiVisual(new Point(newX, newY), new Point(newX + w, newY + h));
             }
 
             var vm = this.DataContext as MainViewModel;
@@ -375,6 +505,7 @@ namespace Vision_OpenCV_App
             // 그려진 모든 도형 삭제
             OverlayCanvas.Children.Clear();
             HideRoiAndHandles();
+            _currentRoiRect = new Rect(0,0,0,0);
             _currentDrawMode = DrawingMode.None;
             Cursor = Cursors.Arrow;
         }
