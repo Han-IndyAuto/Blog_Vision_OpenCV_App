@@ -125,6 +125,13 @@ namespace Vision_OpenCV_App
             // 거의 표준 공식.
             imgTranslate.X = p.X -(p.X - imgTranslate.X) * zoom;
             imgTranslate.Y = p.Y -(p.Y - imgTranslate.Y) * zoom;
+
+            //줌 상태가 변경되면 ROI 핸들 위치도 갱신
+            if (RoiRect.Visibility == Visibility.Visible)
+            {
+                UpdateRoiVisual(new Point(_currentRoiRect.X, _currentRoiRect.Y),
+                                new Point(_currentRoiRect.X + _currentRoiRect.Width, _currentRoiRect.Y + _currentRoiRect.Height));
+            }
         }
 
         private void ZoomBorder_MouseDown(object sender, MouseButtonEventArgs e)
@@ -220,54 +227,7 @@ namespace Vision_OpenCV_App
             }
         }
 
-        private void UpdateRoiVisual(Point start, Point end)
-        {
-            // 두 점 중 작은 값이 왼쪽/위쪽(X, Y), 차이값이 너비/높이(W, H)
-            double x = Math.Min(start.X, end.X);
-            double y = Math.Min(start.Y, end.Y);
-            double w = Math.Abs(end.X - start.X);
-            double h = Math.Abs(end.Y - start.Y);
-
-            // 1. 논리적 ROI 데이터 저장 (이미지 기준 픽셀 - 나중에 자를 때 씀)
-            _currentRoiRect = new Rect(x, y, w, h);
-
-            // 2. 화면 표시용 좌표 변환 (Zoom/Pan 적용)
-            // 이미지가 확대되어 있으면 사각형도 확대된 위치에 그려야 함
-            // 공식: 이미지좌표 * 배율 + 이동거리
-            double screenX = x * imgScale.ScaleX + imgTranslate.X;
-            double screenY = y * imgScale.ScaleY + imgTranslate.Y;
-            double screenW = w * imgScale.ScaleX;
-            double screenH = h * imgScale.ScaleY;
-
-            // 이미 위에서 screenX, screenY, screenW, screenH 계산했기 때문에 자동 확대/축소 기능을 꺼버림.
-            RoiRect.RenderTransform = null; // 중요: 기존 이미지의 Transform을 따라가지 않도록 해제 : 충돌 방지용 초기화
-
-            RoiRect.Width = screenW;        // 계산된 화면 크기 적용
-            RoiRect.Height = screenH;
-            Canvas.SetLeft(RoiRect, screenX);   // 부모 캔버스(ImgCanvas) 위에서 RoiRect의 X 위치는 screenX라고 지정.
-            Canvas.SetTop(RoiRect, screenY);    // 부모 캔버스(ImgCanvas) 위에서 RoiRect의 Y 위치는 screenY라고 지정.
-
-            // Resize Handle 위치 업데이트
-            UpdateResizeHandle(Handle_TL, screenX, screenY);
-            UpdateResizeHandle(Handle_TR, screenX + screenW, screenY);
-            UpdateResizeHandle(Handle_BL, screenX, screenY + screenH);
-            UpdateResizeHandle(Handle_BR, screenX + screenW, screenY + screenH);
-
-            // 상하좌우 핸들은 각 변의 중앙에 위치
-            UpdateResizeHandle(Handle_Top, screenX + screenW / 2, screenY);
-            UpdateResizeHandle(Handle_Bottom, screenX + screenW / 2, screenY + screenH);
-            UpdateResizeHandle(Handle_Left, screenX, screenY + screenH / 2);
-            UpdateResizeHandle(Handle_Right, screenX + screenW, screenY + screenH / 2);
-
-        }
-
-        private void UpdateResizeHandle(Rectangle handle, double x, double y)
-        {
-            handle.Visibility = Visibility.Visible;
-            Canvas.SetLeft(handle, x - 5);
-            Canvas.SetTop(handle, y - 5);
-        }
-
+       
         private void ZoomBorder_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if (_isDragging && e.ChangedButton == MouseButton.Middle)
@@ -512,6 +472,54 @@ namespace Vision_OpenCV_App
         private void ImgView_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             Dispatcher.InvokeAsync(() => FitImageToScreen(), DispatcherPriority.ContextIdle);
+        }
+
+        private void UpdateRoiVisual(Point start, Point end)
+        {
+            // 두 점 중 작은 값이 왼쪽/위쪽(X, Y), 차이값이 너비/높이(W, H)
+            double x = Math.Min(start.X, end.X);
+            double y = Math.Min(start.Y, end.Y);
+            double w = Math.Abs(end.X - start.X);
+            double h = Math.Abs(end.Y - start.Y);
+
+            // 1. 논리적 ROI 데이터 저장 (이미지 기준 픽셀 - 나중에 자를 때 씀)
+            _currentRoiRect = new Rect(x, y, w, h);
+
+            // 2. 화면 표시용 좌표 변환 (Zoom/Pan 적용)
+            // 이미지가 확대되어 있으면 사각형도 확대된 위치에 그려야 함
+            // 공식: 이미지좌표 * 배율 + 이동거리
+            double screenX = x * imgScale.ScaleX + imgTranslate.X;
+            double screenY = y * imgScale.ScaleY + imgTranslate.Y;
+            double screenW = w * imgScale.ScaleX;
+            double screenH = h * imgScale.ScaleY;
+
+            // 이미 위에서 screenX, screenY, screenW, screenH 계산했기 때문에 자동 확대/축소 기능을 꺼버림.
+            RoiRect.RenderTransform = null; // 중요: 기존 이미지의 Transform을 따라가지 않도록 해제 : 충돌 방지용 초기화
+
+            RoiRect.Width = screenW;        // 계산된 화면 크기 적용
+            RoiRect.Height = screenH;
+            Canvas.SetLeft(RoiRect, screenX);   // 부모 캔버스(ImgCanvas) 위에서 RoiRect의 X 위치는 screenX라고 지정.
+            Canvas.SetTop(RoiRect, screenY);    // 부모 캔버스(ImgCanvas) 위에서 RoiRect의 Y 위치는 screenY라고 지정.
+
+            // Resize Handle 위치 업데이트
+            UpdateResizeHandle(Handle_TL, screenX, screenY);
+            UpdateResizeHandle(Handle_TR, screenX + screenW, screenY);
+            UpdateResizeHandle(Handle_BL, screenX, screenY + screenH);
+            UpdateResizeHandle(Handle_BR, screenX + screenW, screenY + screenH);
+
+            // 상하좌우 핸들은 각 변의 중앙에 위치
+            UpdateResizeHandle(Handle_Top, screenX + screenW / 2, screenY);
+            UpdateResizeHandle(Handle_Bottom, screenX + screenW / 2, screenY + screenH);
+            UpdateResizeHandle(Handle_Left, screenX, screenY + screenH / 2);
+            UpdateResizeHandle(Handle_Right, screenX + screenW, screenY + screenH / 2);
+
+        }
+
+        private void UpdateResizeHandle(Rectangle handle, double x, double y)
+        {
+            handle.Visibility = Visibility.Visible;
+            Canvas.SetLeft(handle, x - 5);
+            Canvas.SetTop(handle, y - 5);
         }
 
         public void FitImageToScreen()
