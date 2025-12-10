@@ -159,12 +159,62 @@ namespace Vision_OpenCV_App
                         _isRoiDrawing = true;
                         _roiStartPoint = mousePos;
 
-                        RoiRect.Visibility = Visibility.Visible;
+                        RoiRect.Visibility = Visibility.Visible; 
                         RoiRect.Width = 0;
                         RoiRect.Height = 0;
                         UpdateRoiVisual(mousePos, mousePos);
 
                         ImgCanvas.CaptureMouse();
+                    }
+                }
+                else if (_currentDrawMode != DrawingMode.Roi)
+                {
+                    _drawStartPoint = mousePos; // 현재 마우스 좌표.
+
+                    if (_currentDrawMode == DrawingMode.Line)
+                    {
+                        _tempShape = new Line()
+                        {
+                            Stroke = Brushes.Yellow,
+                            StrokeThickness = 5,
+                            X1 = _drawStartPoint.X,
+                            Y1 = _drawStartPoint.Y,
+                            X2 = _drawStartPoint.X,
+                            Y2 = _drawStartPoint.Y
+                        };
+                    }
+                    else if (_currentDrawMode == DrawingMode.Circle)
+                    {
+                        _tempShape = new Ellipse()
+                        {
+                            Stroke = Brushes.Lime,
+                            StrokeThickness = 5,
+                            Width = 0,
+                            Height = 0
+                        };
+
+                        Canvas.SetLeft(_tempShape, _drawStartPoint.X);
+                        Canvas.SetTop(_tempShape, _drawStartPoint.Y);
+                    }
+                    else if (_currentDrawMode == DrawingMode.Rectangle)
+                    {
+                        _tempShape = new Rectangle()
+                        {
+                            Stroke = Brushes.Cyan,
+                            StrokeThickness = 5,
+                            Width = 0,
+                            Height = 0
+                        };
+                        Canvas.SetLeft(_tempShape, _drawStartPoint.X);
+                        Canvas.SetTop(_tempShape, _drawStartPoint.Y);
+                    }
+
+                    if(_tempShape != null)
+                    {
+                        // _tempShape 가 어떤 도형의 객체로 할당되었다면, 할당된 도형을 OverlayCavas 위에 추가(Add) 시켜라.
+                        OverlayCanvas.Children.Add(_tempShape);
+                        // 그리는 동안 마우스를 권한을 가지고 있겠다.
+                        ZoomBorder.CaptureMouse();
                     }
                 }
             }
@@ -244,6 +294,13 @@ namespace Vision_OpenCV_App
             {
                 _isMovingRoi = false;
                 ImgCanvas.ReleaseMouseCapture();
+            }
+            else if(_currentDrawMode != DrawingMode.None && _tempShape != null)
+            {
+                ZoomBorder.ReleaseMouseCapture();
+                _currentDrawMode = DrawingMode.None;
+                _tempShape = null;
+                Cursor = Cursors.Arrow;
             }
         }
 
@@ -356,7 +413,6 @@ namespace Vision_OpenCV_App
                 UpdateRoiVisual(new Point(newX, newY), new Point(newX + newW, newY + newH));
 
             }
-
             else if (_isMovingRoi && ImgView.Source != null)
             {
                 var bitmap = ImgView.Source as BitmapSource;
@@ -376,6 +432,30 @@ namespace Vision_OpenCV_App
 
                 // 이동된 위치로 업데이트
                 UpdateRoiVisual(new Point(newX, newY), new Point(newX + w, newY + h));
+            }
+            else if (_currentDrawMode != DrawingMode.None && _tempShape != null && e.LeftButton == MouseButtonState.Pressed)
+            {
+                Point currentPos = e.GetPosition(ImgView);
+
+                if(_currentDrawMode == DrawingMode.Line)
+                {
+                    var line = _tempShape as Line;
+                    line.X2 = currentPos.X;
+                    line.Y2 = currentPos.Y;
+                }
+                else if(_currentDrawMode == DrawingMode.Circle || _currentDrawMode == DrawingMode.Rectangle)
+                {
+                    // 시작점과 현재점으로 Top-Left와 Width/Height 계산.
+                    double x = Math.Min(_drawStartPoint.X, currentPos.X);
+                    double y = Math.Min(_drawStartPoint.Y, currentPos.Y);
+                    double w = Math.Abs(currentPos.X - _drawStartPoint.X);
+                    double h = Math.Abs(currentPos.Y - _drawStartPoint.Y);
+
+                    Canvas.SetLeft(_tempShape, x);
+                    Canvas.SetTop(_tempShape, y);
+                    _tempShape.Width = w;
+                    _tempShape.Height = h;
+                }
             }
 
             var vm = this.DataContext as MainViewModel;
@@ -492,8 +572,6 @@ namespace Vision_OpenCV_App
             }
         }
 
-        
-
         private void Menu_DrawRoi_Click(object sender, RoutedEventArgs e)
         {
             _currentDrawMode = DrawingMode.Roi;
@@ -557,6 +635,24 @@ namespace Vision_OpenCV_App
 
             ImgCanvas.CaptureMouse();
             e.Handled = true;
+        }
+
+        private void Menu_DrawLine_Click(object sender, RoutedEventArgs e)
+        {
+            _currentDrawMode = DrawingMode.Line;
+            Cursor = Cursors.Cross;
+        }
+
+        private void Menu_DrawCircle_Click(object sender, RoutedEventArgs e)
+        {
+            _currentDrawMode = DrawingMode.Circle;
+            Cursor = Cursors.Cross;
+        }
+
+        private void Menu_DrawRect_Click(object sender, RoutedEventArgs e)
+        {
+            _currentDrawMode = DrawingMode.Rectangle;
+            Cursor = Cursors.Cross;
         }
     }
 }

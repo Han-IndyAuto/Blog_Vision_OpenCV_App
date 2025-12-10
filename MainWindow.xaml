@@ -74,12 +74,10 @@
         <ContextMenu x:Key="DrawingContextMenu" >
             <MenuItem Header="Draw Roi (관심 영역)" Click="Menu_DrawRoi_Click" />
             <Separator />
-            <!--
             <MenuItem Header="Draw Line (직선그리기)" Click="Menu_DrawLine_Click" />
             <MenuItem Header="Draw Circle (원 그리기)" Click="Menu_DrawCircle_Click" />
             <MenuItem Header="Draw Rectangle (사각형 그리기)" Click="Menu_DrawRect_Click" />
             <Separator />
-            -->
             <MenuItem Header="Clear All (지우기)" Click="Menu_Clear_Click" />
             <Separator />
             <MenuItem Header="Fit to Screen (화면 맞춤)" Click="Menu_Fit_Click" />
