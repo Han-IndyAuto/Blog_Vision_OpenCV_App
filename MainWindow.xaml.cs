@@ -298,6 +298,28 @@ namespace Vision_OpenCV_App
             else if(_currentDrawMode != DrawingMode.None && _tempShape != null)
             {
                 ZoomBorder.ReleaseMouseCapture();
+
+                if(_currentDrawMode == DrawingMode.Line && _tempShape is Line line)
+                {
+                    double dist = Math.Sqrt(Math.Pow(line.X2 - line.X1, 2) + Math.Pow(line.Y2 - line.Y1, 2));
+
+                    TextBlock tb = new TextBlock()
+                    {
+                        Text = $"{dist:F1}px",
+                        Foreground = Brushes.Yellow,
+                        Background = new SolidColorBrush(Color.FromArgb(128,0,0,0)),
+                        Padding = new Thickness(2),
+                        FontSize = 14,
+                        FontWeight = FontWeights.Bold
+                    };
+
+                    Canvas.SetLeft(tb, line.X2);
+                    Canvas.SetTop(tb, line.Y2);
+
+                    OverlayCanvas.Children.Add(tb);
+                }
+
+
                 _currentDrawMode = DrawingMode.None;
                 _tempShape = null;
                 Cursor = Cursors.Arrow;

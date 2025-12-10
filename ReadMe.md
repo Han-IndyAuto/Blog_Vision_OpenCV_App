@@ -11,6 +11,7 @@
 ### 2. 진행 내용
 - WPF 기반의 OpenCV 영상처리 프로젝트 #13 적용. 
 - Line, Circle, Rectangle 그리기 메뉴 추가.
+- Line 을 그린 다음 끝점에 직선의 거리를 픽셀 값으로 표기하도록 코드 추가.
 
 
 ## 📅 2025년 12월 09일 (Second Commit)
