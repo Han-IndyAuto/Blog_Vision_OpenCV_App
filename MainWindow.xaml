@@ -114,6 +114,65 @@
             </StackPanel>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type local:OtsuParams}">
+            <StackPanel>
+                <TextBlock Text="Otsu Threshold Settings" Margin="0,0,0,5" FontWeight="Bold"/>
+                <TextBlock Text="Threshold Type" Margin="0,5,0,0"/>
+                <!-- ItemsSource를 파라미터 객체의 리스트 속성에 바인딩 -->
+                <ComboBox ItemsSource="{Binding ThresholdTypesSource}" 
+                          SelectedItem="{Binding SelectedType}"
+                          Margin="0,2,0,0" Height="25"/>
+                <TextBlock Text="* 자동으로 최적의 임계값을 찾습니다." 
+                           Foreground="Gray" FontSize="11" Margin="0,5,0,0"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type local:AdaptiveThresholdParams}">
+            <StackPanel>
+                <TextBlock Text="Adaptive Threshold Settings" Margin="0,0,0,5" FontWeight="Bold"/>
+
+                <TextBlock Text="Adaptive Method" Margin="0,5,0,0"/>
+                <ComboBox ItemsSource="{Binding AdaptiveMethodSource}" 
+                          SelectedItem="{Binding AdaptiveMethod}"
+                          Margin="0,2,0,0" Height="25"/>
+
+                <TextBlock Text="Threshold Type" Margin="0,5,0,0"/>
+                <ComboBox ItemsSource="{Binding ThresholdTypesSource}" 
+                          SelectedItem="{Binding ThresholdType}"
+                          Margin="0,2,0,0" Height="25"/>
+                
+                <TextBlock Text="Adaptive Threshold Settings" Margin="0,0,0,5" FontWeight="Bold"/>
+                <TextBlock Text="Block Size (홀수만 가능)" Margin="0,5,0,0"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="50"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Slider Grid.Column="0" Maximum="99" Minimum="3" SmallChange="2" LargeChange="2" 
+                            TickFrequency="2" IsSnapToTickEnabled="True"
+                            Value="{Binding BlockSize}" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" Text="{Binding BlockSize}" Margin="5,0,0,0"
+                             TextAlignment="Center"/>
+                </Grid>
+
+                <TextBlock Text="Contant (C)" Margin="0,5,0,0" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="50"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Slider Grid.Column="0" Minimum="-20" Maximum="50" Value="{Binding ConstantC}"
+                            VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" Text="{Binding ConstantC}" Margin="5,0,0,0"
+                             TextAlignment="Center"/>
+                </Grid>
+            </StackPanel>
+        </DataTemplate>
+                      
+
         <DataTemplate DataType="{x:Type local:AlgorithmParameters}">
             <TextBlock Text="설정 가능한 속성이 없습니다."
                        Foreground="Gray"

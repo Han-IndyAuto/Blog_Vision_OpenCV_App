@@ -127,6 +127,8 @@ namespace Vision_OpenCV_App
                 //"ROI Selection (영역 설정)",
                 //"Gray 처리", // (OpenCV 서비스 로직에서 예외처리 혹은 구현 필요, 여기선 생략)
                 "Threshold",
+                "Otsu Threshold",
+                "Adaptive Threshold"
                 //"Adaptive Threshold (적응형 이진화)",
                 //"Morphology (모폴로지)",
                 //"Edge Detection (엣지 검출)",
@@ -154,6 +156,15 @@ namespace Vision_OpenCV_App
                 case "Threshold":
                     // 이진화 설정을 담을 그릇을 새로 만듭니다. (기본값 128 등 포함)
                     CurrentParameters = new ThresholdParams();
+                    break;
+
+                case "Adaptive Threshold":
+                    CurrentParameters = new AdaptiveThresholdParams();
+                    break;
+
+                case "Otsu Threshold":
+                    // Otsu는 별도 설정이 필요 없으므로 null
+                    CurrentParameters = new OtsuParams();
                     break;
 
                 default:

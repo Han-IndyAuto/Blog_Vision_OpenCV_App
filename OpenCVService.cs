@@ -102,6 +102,38 @@ namespace Vision_OpenCV_App
                             }
                         }
                         break;
+
+                    case "Otsu Threshold":
+                        if (parameters is OtsuParams otsuParams)
+                        {
+                            using (Mat gray = new Mat())
+                            {
+                                Cv2.CvtColor(_srcImage, gray, ColorConversionCodes.BGR2GRAY);
+
+                                ThresholdTypes type = otsuParams.SelectedType | ThresholdTypes.Otsu;
+                                double otsuVal = Cv2.Threshold(gray, _destImage, 0, 255, type);
+
+                                resultMessage += $": {algorithm} ({otsuParams.SelectedType}, Auto val: {otsuVal})";
+                            }
+                        }
+                        break;
+
+                    case "Adaptive Threshold":
+                        if (parameters is AdaptiveThresholdParams adParams)
+                        {
+                            using (Mat gray = new Mat())
+                            {
+                                Cv2.CvtColor(_srcImage, gray, ColorConversionCodes.BGR2GRAY);
+                                Cv2.AdaptiveThreshold(gray, _destImage, 255, 
+                                    adParams.AdaptiveMethod, 
+                                    adParams.ThresholdType, 
+                                    adParams.BlockSize, 
+                                    adParams.ConstantC);
+
+                                resultMessage += $": {algorithm} (Block Size: {adParams.BlockSize}, C: {adParams.ConstantC})";
+                            }
+                        }
+                        break;
                 }
             });
 
