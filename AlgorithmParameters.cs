@@ -147,4 +147,66 @@ namespace Vision_OpenCV_App
         };
     }
 
+
+    public enum HistogramMaskMode
+    {
+        None,
+        CenterCircle,   // 중앙 원형 마스크
+        LeftHalf,       // 왼쪽 절반
+        RightHalf       // 오른쪽 절반
+    }
+
+    public enum ColorChannel
+    {
+        Blue_Gray = 0,
+        Green = 1,
+        Red = 2
+    }
+
+    public class HistogramParams : AlgorithmParameters
+    {
+        private ColorChannel _channel = ColorChannel.Blue_Gray;
+        public ColorChannel Channel
+        {
+            get => _channel;
+            set { if (_channel != value) { _channel = value; OnPropertyChanged(); } }
+        }
+
+        private int _histSize = 256;
+        public int HistSize
+        {
+            get => _histSize;
+            set
+            {
+                if (value < 1) value = 1;
+                if (value > 256) value = 256;
+                if (_histSize != value) { _histSize = value; OnPropertyChanged(); }
+            }
+        }
+
+        private float _rangeMin = 0;
+        public float RangeMin
+        {
+            get => _rangeMin;
+            set { if (_rangeMin != value) { _rangeMin = value; OnPropertyChanged(); } }
+        }
+
+        private float _rangeMax = 256;
+        public float RangeMax
+        {
+            get => _rangeMax;
+            set { if (_rangeMax != value) { _rangeMax = value; OnPropertyChanged(); } }
+        }
+
+        private HistogramMaskMode _maskMode = HistogramMaskMode.None;
+        public HistogramMaskMode MaskMode
+        {
+            get => _maskMode;
+            set { if (_maskMode != value) { _maskMode = value; OnPropertyChanged(); } }
+        }
+
+        public List<ColorChannel> ChannelSource { get; } = Enum.GetValues(typeof(ColorChannel)).Cast<ColorChannel>().ToList();
+        public List<HistogramMaskMode> MaskModeSource { get; } = Enum.GetValues(typeof(HistogramMaskMode)).Cast<HistogramMaskMode>().ToList();
+    }
+
 }

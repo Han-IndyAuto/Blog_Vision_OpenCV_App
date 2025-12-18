@@ -126,9 +126,12 @@ namespace Vision_OpenCV_App
             {
                 //"ROI Selection (영역 설정)",
                 //"Gray 처리", // (OpenCV 서비스 로직에서 예외처리 혹은 구현 필요, 여기선 생략)
+
                 "Threshold",
                 "Otsu Threshold",
-                "Adaptive Threshold"
+                "Adaptive Threshold",
+                "Histogram",
+
                 //"Adaptive Threshold (적응형 이진화)",
                 //"Morphology (모폴로지)",
                 //"Edge Detection (엣지 검출)",
@@ -165,6 +168,10 @@ namespace Vision_OpenCV_App
                 case "Otsu Threshold":
                     // Otsu는 별도 설정이 필요 없으므로 null
                     CurrentParameters = new OtsuParams();
+                    break;
+
+                case "Histogram":
+                    CurrentParameters = new HistogramParams();
                     break;
 
                 default:
@@ -223,6 +230,14 @@ namespace Vision_OpenCV_App
                 AnalysisResult = result;
                 ShowOriginal = false;
                 UpdateDisplay();
+
+                // 히스토그램 알고리즘의 경우, 팝업 윈도우 표시
+                if(SelectedAlgorithm == "Histogram" && _cvServices.LastHistogramData != null)
+                {
+                    HistogramWindow histWin = new HistogramWindow(_cvServices.LastHistogramData, _cvServices.LastHistogramChannel);
+                    histWin.Owner = Application.Current.MainWindow; // 부모 창 설정
+                    histWin.Show();
+                }
             }
             catch (Exception ex)
             {
