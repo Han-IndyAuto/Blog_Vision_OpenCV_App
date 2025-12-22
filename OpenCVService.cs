@@ -237,6 +237,83 @@ namespace Vision_OpenCV_App
                             resultMessage += $": Histogram ({histParams.Channel})";
                         }
                         break;
+
+                    // Normalize 기능 구현
+                    case "Normalize":
+                        if (parameters is NormalizeParams normParams)
+                        {
+                            // 1. [정규화 실행]
+                            // 입력 이미지(_srcImage)를 정규화하여 결과 이미지(_destImage)에 저장
+                            // alpha: 하한값 또는 기준값
+                            // beta: 상한값 (MinMax일 때)
+                            // type: 정규화 방식 (MinMax, L1, L2 등)
+                            Cv2.Normalize(_srcImage, _destImage,
+                                normParams.Alpha,
+                                normParams.Beta,
+                                normParams.NormType);
+
+                            // 2. [히스토그램 계산]
+                            // 정규화된 결과 이미지(_destImage)의 분포 변화를 확인하기 위해
+                            // 히스토그램 데이터를 계산하여 팝업용 변수(LastHistogramData)에 저장합니다.
+                            CalculateHistogramForPopup(_destImage);
+
+                            resultMessage += $": Normalize ({normParams.NormType}, A:{normParams.Alpha}, B:{normParams.Beta})";
+                        }
+                        break;
+
+                    case "Equalize":
+                        if (parameters is EqualizeParams)
+                        {
+                            // 1. [그레이스케일 변환] EqualizeHist는 그레이스케일 이미지에만 적용 가능
+                            using (Mat gray = new Mat())
+                            {
+                                Cv2.CvtColor(_srcImage, gray, ColorConversionCodes.BGR2GRAY);
+
+                                //Cv2.ImWrite("./GrayImage.png", gray);
+
+                                // 2. [히스토그램 평활화 실행]
+                                Cv2.EqualizeHist(gray, _destImage);
+
+                                // 3. [히스토그램 계산]
+                                // 평활화된 결과 이미지(_destImage)의 분포 변화를 확인하기 위해
+                                // 히스토그램 데이터를 계산하여 팝업용 변수(LastHistogramData)에 저장합니다.
+                                CalculateHistogramForPopup(_destImage);
+
+                                // 4. [결과 이미지 채널 변경]
+                                // _destImage가 Gray 이미지이므로, 디스플레이를 위해 BGR로 변환합니다.
+                                // (WPF ImageSource로 변환 시 BGR 형식이 일반적임)
+                                Cv2.CvtColor(_destImage, _destImage, ColorConversionCodes.GRAY2BGR);
+
+                                resultMessage += $": Equalize";
+                            }
+                        }
+                        break;
+
+                    case "CLAHE":
+                        if (parameters is ClaheParams claheParams)
+                        {
+                            // 1. [그레이스케일 변환] CLAHE는 그레이스케일 이미지에 적용합니다.
+                            using (Mat gray = new Mat())
+                            {
+                                Cv2.CvtColor(_srcImage, gray, ColorConversionCodes.BGR2GRAY);
+
+                                // 2. [CLAHE 생성 및 설정]
+                                using (var clahe = Cv2.CreateCLAHE(claheParams.ClipLimit, new OpenCvSharp.Size(claheParams.TileGridSize, claheParams.TileGridSize)))
+                                {
+                                    // 3. [CLAHE 적용]
+                                    clahe.Apply(gray, _destImage);
+                                }
+
+                                // 4. [히스토그램 계산]
+                                CalculateHistogramForPopup(_destImage);
+
+                                // 5. [결과 이미지 채널 변경] 디스플레이용 BGR 변환
+                                Cv2.CvtColor(_destImage, _destImage, ColorConversionCodes.GRAY2BGR);
+
+                                resultMessage += $": CLAHE (Clip:{claheParams.ClipLimit}, Grid:{claheParams.TileGridSize})";
+                            }
+                        }
+                        break;
                 }
             });
 
@@ -258,6 +335,35 @@ namespace Vision_OpenCV_App
         {
             CleanupImages();
         }
+
+
+        // 특정 이미지의 히스토그램을 계산하여 LastHistogramData에 저장
+        private void CalculateHistogramForPopup(Mat image)
+        {
+            if (image == null || image.IsDisposed) return;
+
+            // Normalize 결과는 보통 Gray이거나 Color일 수 있음.
+            // 편의상 0번 채널(Blue or Gray)의 히스토그램만 계산하여 보여줌.
+            Mat[] channels = Cv2.Split(image);
+            Mat source = channels[0];
+            LastHistogramChannel = 0; // Gray/Blue
+
+            Mat hist = new Mat();
+            int[] histSize = { 256 };
+            Rangef[] ranges = { new Rangef(0, 256) };
+
+            Cv2.CalcHist(new[] { source }, new[] { 0 }, null, hist, 1, histSize, ranges);
+
+            float[] rawData = new float[256];
+            hist.GetArray(out rawData);
+            LastHistogramData = rawData;
+
+            // 리소스 정리
+            hist.Dispose();
+            foreach (var c in channels) c.Dispose();
+        }
+
+
 
         public ImageSource GetOriginalImage() => _cachedOriginal;
         public ImageSource GetProcessedImage() => _cachedProcessed;

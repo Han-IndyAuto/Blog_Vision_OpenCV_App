@@ -1,6 +1,21 @@
 # 📄 WPF OpenCV 라이브러리를 이용한 비전프로그램 개발
 ---
 
+## 📅 2025년 12월 22일 (First Commit)
+**작성자:** indy  
+**검토자:** indy
+
+### 1. 개요
+- Blog 게시물 작성 코드: WPF와 OpenCV를 활용한 비전 프로그램 개발 방법 소개
+
+### 2. 진행 내용
+- WPF 기반의 OpenCV 영상처리 프로젝트 #17 ~ #20 적용. 
+- Normalize 알고리즘 추가 (Normalize 윈도우 생성하여 그래프를 출력하도록 구현).
+- Equalize 알고리즘 추가 (Equalize 윈도우 생성하여 그래프를 출력하도록 구현).
+- CLAHE 알고리즘 추가 (CLAHE 윈도우 생성하여 그래프를 출력하도록 구현).
+
+---
+
 ## 📅 2025년 12월 18일 (First Commit)
 **작성자:** indy  
 **검토자:** indy
@@ -9,7 +24,7 @@
 - Blog 게시물 작성 코드: WPF와 OpenCV를 활용한 비전 프로그램 개발 방법 소개
 
 ### 2. 진행 내용
-- WPF 기반의 OpenCV 영상처리 프로젝트 #16 적용. 
+- WPF 기반의 OpenCV 영상처리 프로젝트 #17 적용. 
 - Histogram 알고리즘 추가 (Histogram 윈도우 생성하여 그래프를 출력하도록 구현).
 - HistogramWindow.xaml 파일 추가.
 
@@ -23,7 +38,7 @@
 - Blog 게시물 작성 코드: WPF와 OpenCV를 활용한 비전 프로그램 개발 방법 소개
 
 ### 2. 진행 내용
-- WPF 기반의 OpenCV 영상처리 프로젝트 #14, #15 적용. 
+- WPF 기반의 OpenCV 영상처리 프로젝트 #14, #15, #16 적용. 
 - Otsu 이진화 메뉴 추가.
 - Adaptive Threshold 이진화 메뉴 추가.
 

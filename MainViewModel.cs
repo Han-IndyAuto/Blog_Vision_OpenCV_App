@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -131,8 +132,10 @@ namespace Vision_OpenCV_App
                 "Otsu Threshold",
                 "Adaptive Threshold",
                 "Histogram",
+                "Normalize",
+                "Equalize",
+                "CLAHE"
 
-                //"Adaptive Threshold (적응형 이진화)",
                 //"Morphology (모폴로지)",
                 //"Edge Detection (엣지 검출)",
                 //"Blob Analysis (블롭 분석)",
@@ -172,6 +175,18 @@ namespace Vision_OpenCV_App
 
                 case "Histogram":
                     CurrentParameters = new HistogramParams();
+                    break;
+
+                case "Normalize":
+                    CurrentParameters = new NormalizeParams();
+                    break;
+
+                case "Equalize":
+                    CurrentParameters = new EqualizeParams();
+                    break;
+
+                case "CLAHE":
+                    CurrentParameters = new ClaheParams();
                     break;
 
                 default:
@@ -232,7 +247,9 @@ namespace Vision_OpenCV_App
                 UpdateDisplay();
 
                 // 히스토그램 알고리즘의 경우, 팝업 윈도우 표시
-                if(SelectedAlgorithm == "Histogram" && _cvServices.LastHistogramData != null)
+                //if(SelectedAlgorithm == "Histogram" && _cvServices.LastHistogramData != null)
+                if((SelectedAlgorithm == "Histogram" || SelectedAlgorithm == "Normalize" || SelectedAlgorithm == "Equalize" || SelectedAlgorithm == "CLAHE") 
+                    && _cvServices.LastHistogramData != null)
                 {
                     HistogramWindow histWin = new HistogramWindow(_cvServices.LastHistogramData, _cvServices.LastHistogramChannel);
                     histWin.Owner = Application.Current.MainWindow; // 부모 창 설정

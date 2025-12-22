@@ -209,4 +209,86 @@ namespace Vision_OpenCV_App
         public List<HistogramMaskMode> MaskModeSource { get; } = Enum.GetValues(typeof(HistogramMaskMode)).Cast<HistogramMaskMode>().ToList();
     }
 
+
+    public class NormalizeParams : AlgorithmParameters
+    {
+        private double _alpha = 0.0;
+        public double Alpha
+        {
+            get => _alpha;
+            set
+            {
+                if (_alpha == value) return;
+
+                _alpha = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _beta = 255;
+        public double Beta
+        {
+            get => _beta;
+            set
+            {
+                if (_beta == value) return;
+                _beta = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private NormTypes _normType = NormTypes.MinMax;
+        public NormTypes NormType
+        {
+            get => _normType;
+            set
+            {
+                if (_normType == value) return;
+                _normType = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public List<NormTypes> NormTypeSource { get; } = new List<NormTypes>
+        {
+            NormTypes.MinMax,
+            NormTypes.L1,
+            NormTypes.L2,
+            NormTypes.INF
+        };
+    }
+
+
+
+    public class EqualizeParams : AlgorithmParameters
+    {
+        // EqualizeHist는 별도 파라미터가 없습니다.
+    }
+
+    // [신규] CLAHE 파라미터 추가
+    public class ClaheParams : AlgorithmParameters
+    {
+        // 대비 제한 값 (기본 40.0)
+        private double _clipLimit = 40.0;
+        public double ClipLimit
+        {
+            get => _clipLimit;
+            set { if (_clipLimit != value) { _clipLimit = value; OnPropertyChanged(); } }
+        }
+
+        // 타일 그리드 크기 (기본 8 -> 8x8)
+        private int _tileGridSize = 8;
+        public int TileGridSize
+        {
+            get => _tileGridSize;
+            set
+            {
+                if (value < 1) value = 1;
+                if (_tileGridSize != value) { _tileGridSize = value; OnPropertyChanged(); }
+            }
+        }
+    }
+
+
+
 }
