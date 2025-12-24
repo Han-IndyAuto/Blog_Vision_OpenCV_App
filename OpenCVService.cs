@@ -87,10 +87,16 @@ namespace Vision_OpenCV_App
             if (_srcImage == null || _srcImage.IsDisposed) return "Non Image";
             string resultMessage = "Processing Complete";
 
+            // [추가] 히스토그램 분석인 경우 _destImage를 덮어쓰지 않기 위해 플래그 사용
+            bool updateDisplayImage = true;
+
             await Task.Run(() => 
             {
-                if (_destImage != null) _destImage.Dispose();
-                _destImage = _srcImage.Clone();
+                if (algorithm != "Histogram")
+                {
+                    if (_destImage != null) _destImage.Dispose();
+                    _destImage = _srcImage.Clone();
+                }
 
                 switch (algorithm)
                 {
@@ -142,6 +148,9 @@ namespace Vision_OpenCV_App
                     case "Histogram":
                         if (parameters is HistogramParams histParams)
                         {
+                            // 메인 화면 이미지를 업데이트 하지 않음
+                            updateDisplayImage = false;
+
                             // 1. 소스 준비 (채널 분리)
                             Mat[] channels = Cv2.Split(_srcImage);
                             Mat source = new Mat();
@@ -199,35 +208,6 @@ namespace Vision_OpenCV_App
                             hist.GetArray(out rawData);
                             LastHistogramData = rawData;
                             LastHistogramChannel = channelIdx;
-
-                            // 5. 결과 이미지(그래프) 생성 (배경 검정)
-                            // 256 x 200 크기의 그래프 이미지 생성
-                            int histW = 512;
-                            int histH = 400;
-                            _destImage = new Mat(histH, histW, MatType.CV_8UC3, Scalar.All(0));
-
-                            int binW = (int)((double)histW / histSize[0]);
-
-                            Scalar color;
-                            if (channels.Length == 1) color = Scalar.Gray;
-                            else if (channelIdx == 0) color = Scalar.Blue;
-                            else if (channelIdx == 1) color = Scalar.Green;
-                            else color = Scalar.Red;
-
-                            for (int i = 1; i < histSize[0]; i++)
-                            {
-                                float val1 = rawData[i - 1];
-                                float val2 = rawData[i];
-
-                                // 값 스케일링 (이미지 높이에 맞춤)
-                                int y1 = (int)(histH - (val1 / 255.0 * histH));
-                                int y2 = (int)(histH - (val2 / 255.0 * histH));
-
-                                Cv2.Line(_destImage,
-                                    new OpenCvSharp.Point(binW * (i - 1), y1),
-                                    new OpenCvSharp.Point(binW * i, y2),
-                                    color, 2);
-                            }
 
                             // 사용한 리소스 정리
                             if (mask != null) mask.Dispose();
@@ -317,10 +297,15 @@ namespace Vision_OpenCV_App
                 }
             });
 
-            await Application.Current.Dispatcher.InvokeAsync(() => 
+            // updateDisplayImage가 true일 때만 화면에 보여지는 이미지(_cachedProcessed)를 교체합니다.
+            // Histogram인 경우에는 false이므로 이 블록이 실행되지 않아, 원래 이미지가 유지됩니다.
+            if (updateDisplayImage)
             {
-                _cachedProcessed = _destImage.ToBitmapSource();
-            });
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    _cachedProcessed = _destImage.ToBitmapSource();
+                });
+            }
 
             return resultMessage;
         }
