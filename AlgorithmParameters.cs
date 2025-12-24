@@ -290,5 +290,87 @@ namespace Vision_OpenCV_App
     }
 
 
+    // [신규] Geometric Transformation 파라미터 (통합)
+    public class GeometricParams : AlgorithmParameters
+    {
+        // 이동 (X축)
+        private double _moveX = 0;
+        public double MoveX
+        {
+            get => _moveX;
+            set 
+            {
+                if (_moveX == value) return;
+
+                _moveX = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 이동 (Y축)
+        private double _moveY = 0;
+        public double MoveY
+        {
+            get => _moveY;
+            set 
+            {
+                if (_moveY == value) return;
+
+                _moveY = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 회전 각도 (Degrees)
+        private double _angle = 0;
+        public double Angle
+        {
+            get => _angle;
+            set 
+            {
+                if (_angle == value) return;
+
+                _angle = value; 
+                OnPropertyChanged(); 
+            }
+        }
+
+        // 확대/축소 비율 (Scale Factor, 1.0 = 원본)
+        private double _scale = 1.0;
+        public double Scale
+        {
+            get => _scale;
+            set 
+            {
+                if (_scale == value) return;
+                
+                _scale = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 보간법 (Interpolation Method)
+        private InterpolationFlags _interpolation = InterpolationFlags.Linear;
+        public InterpolationFlags Interpolation
+        {
+            get => _interpolation;
+            set 
+            {
+                if (_interpolation != value) return;
+                
+                _interpolation = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 보간법 선택 목록
+        public List<InterpolationFlags> InterpolationSource { get; } = new List<InterpolationFlags>
+        {
+            InterpolationFlags.Nearest, // 빠름, 계단현상
+            InterpolationFlags.Linear,  // 기본, 부드러움
+            InterpolationFlags.Cubic,   // 더 부드러움 (느림)
+            InterpolationFlags.Lanczos4 // 고품질 (가장 느림)
+        };
+    }
 
 }

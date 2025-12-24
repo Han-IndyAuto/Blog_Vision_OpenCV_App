@@ -134,7 +134,8 @@ namespace Vision_OpenCV_App
                 "Histogram",
                 "Normalize",
                 "Equalize",
-                "CLAHE"
+                "CLAHE",
+                "Geometric Transformation"
 
                 //"Morphology (모폴로지)",
                 //"Edge Detection (엣지 검출)",
@@ -187,6 +188,10 @@ namespace Vision_OpenCV_App
 
                 case "CLAHE":
                     CurrentParameters = new ClaheParams();
+                    break;
+
+                case "Geometric Transformation":
+                    CurrentParameters = new GeometricParams();
                     break;
 
                 default:
@@ -296,6 +301,33 @@ namespace Vision_OpenCV_App
             }
         }
 
+        // [신규] 처리된 결과 이미지 저장 기능
+        private void SaveProcessedImage(object obj)
+        {
+            // 처리된 이미지가 없으면 리턴 (ShowOriginal이 false일 때만 저장 가능하게 하거나, 내부에서 체크)
+            if (_cvServices.GetProcessedImage() == null)
+            {
+                MessageBox.Show("저장할 처리된 이미지가 없습니다.");
+                return;
+            }
+
+            SaveFileDialog dlg = new SaveFileDialog();
+            dlg.Filter = "PNG Image|*.png|JPEG Image|*.jpg;*.jpeg|Bitmap Image|*.bmp|All Files|*.*";
+            dlg.FileName = "Processed_Image";
+
+            if (dlg.ShowDialog() == true)
+            {
+                try
+                {
+                    _cvServices.SaveProcessedImage(dlg.FileName);
+                    AnalysisResult = $"이미지 저장 완료: {dlg.FileName}";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"저장 실패: {ex.Message}");
+                }
+            }
+        }
 
         // 프로그램 종료 시 호출되어 메모리를 청소합니다.
         public void Cleanup() => _cvServices.Cleanup();
@@ -305,6 +337,9 @@ namespace Vision_OpenCV_App
         // 버튼과 연결되는 끈(Command)입니다.
         public ICommand LoadImageCommand => new RelayCommand(LoadImage);
         public ICommand ApplyAlgorithmCommand => new RelayCommand(ApplyAlgorithm);
+
+        // [신규] 저장 커맨드
+        public ICommand SaveProcessedImageCommand => new RelayCommand(SaveProcessedImage);
 
     }
 

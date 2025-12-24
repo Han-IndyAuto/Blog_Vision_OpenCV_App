@@ -65,6 +65,12 @@ namespace Vision_OpenCV_App
             }
         }
 
+        // [신규] 처리된 결과 이미지 전체 저장
+        public void SaveProcessedImage(string filePath)
+        {
+            if (_destImage == null || _destImage.IsDisposed) return;
+            _destImage.SaveImage(filePath);
+        }
 
         public async Task LoadImageAsync(string filePath)
         {
@@ -292,6 +298,32 @@ namespace Vision_OpenCV_App
 
                                 resultMessage += $": CLAHE (Clip:{claheParams.ClipLimit}, Grid:{claheParams.TileGridSize})";
                             }
+                        }
+                        break;
+
+                    // [신규] Geometric Transformation 통합 구현
+                    case "Geometric Transformation":
+                        if (parameters is GeometricParams geoParams)
+                        {
+                            // 1. 회전 및 스케일 행렬 생성 (GetRotationMatrix2D 사용)
+                            // 중심점: 이미지의 정중앙
+                            Point2f center = new Point2f(_srcImage.Width / 2.0f, _srcImage.Height / 2.0f);
+                            Mat matrix = Cv2.GetRotationMatrix2D(center, geoParams.Angle, geoParams.Scale);
+
+                            // 2. 이동(Translation) 변환 추가
+                            // 회전 행렬의 [0, 2]는 X축 이동, [1, 2]는 Y축 이동 성분입니다.
+                            // 기존 회전/스케일 변환에 사용자가 입력한 이동 값을 더해줍니다.
+                            matrix.Set(0, 2, matrix.At<double>(0, 2) + geoParams.MoveX);
+                            matrix.Set(1, 2, matrix.At<double>(1, 2) + geoParams.MoveY);
+
+                            // 3. warpAffine 적용
+                            // 보간법(Interpolation)도 파라미터에서 받아와 적용합니다.
+                            // BorderTypes.Constant: 빈 공간은 검은색으로 채움
+                            Cv2.WarpAffine(_srcImage, _destImage, matrix, _srcImage.Size(),
+                                geoParams.Interpolation, BorderTypes.Constant, Scalar.All(0));
+
+                            matrix.Dispose();
+                            resultMessage += $": Geometric (Move:{geoParams.MoveX},{geoParams.MoveY} | Rot:{geoParams.Angle} | Scale:{geoParams.Scale})";
                         }
                         break;
                 }
