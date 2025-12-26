@@ -441,4 +441,83 @@ namespace Vision_OpenCV_App
     }
 
 
+    // [신규] Perspective Transform 파라미터 (4개의 점)
+    public class PerspectiveParams : AlgorithmParameters
+    {
+        public string PointInfo => $"P1:({Pt1.X:F0},{Pt1.Y:F0})  P2:({Pt2.X:F0},{Pt2.Y:F0})\nP3:({Pt3.X:F0},{Pt3.Y:F0})  P4:({Pt4.X:F0},{Pt4.Y:F0})";
+
+        private Point2f _pt1 = new Point2f(0, 0);
+        public Point2f Pt1 
+        { 
+            get => _pt1; 
+            set 
+            {
+                if (_pt1 == value) return; 
+
+                _pt1 = value; 
+                OnPropertyChanged(); 
+                OnPropertyChanged(nameof(PointInfo));
+            } 
+        }
+
+        private Point2f _pt2 = new Point2f(0, 0);
+        public Point2f Pt2 
+        { 
+            get => _pt2; 
+            set 
+            {
+                if (_pt2 == value) return; 
+
+                _pt2 = value; 
+                OnPropertyChanged(); 
+                OnPropertyChanged(nameof(PointInfo));
+            } 
+        }
+
+        private Point2f _pt3 = new Point2f(0, 0);
+        public Point2f Pt3 
+        { 
+            get => _pt3; 
+            set 
+            {
+                if (_pt3 == value) return; 
+
+                _pt3 = value; 
+                OnPropertyChanged(); 
+                OnPropertyChanged(nameof(PointInfo)); 
+            } 
+        }
+
+        private Point2f _pt4 = new Point2f(0, 0);
+        public Point2f Pt4 
+        { 
+            get => _pt4; 
+            set 
+            {
+                if (_pt4 == value) return; 
+
+                _pt4 = value; 
+                OnPropertyChanged(); 
+                OnPropertyChanged(nameof(PointInfo));
+            } 
+        }
+
+        
+
+        private InterpolationFlags _interpolation = InterpolationFlags.Linear;
+        public InterpolationFlags Interpolation
+        {
+            get => _interpolation;
+            set { if (_interpolation != value) { _interpolation = value; OnPropertyChanged(); } }
+        }
+
+        public List<InterpolationFlags> InterpolationSource { get; } = new List<InterpolationFlags>
+        {
+            InterpolationFlags.Nearest,
+            InterpolationFlags.Linear,
+            InterpolationFlags.Cubic,
+            InterpolationFlags.Lanczos4
+        };
+    }
+
 }

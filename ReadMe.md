@@ -1,6 +1,21 @@
 # 📄 WPF OpenCV 라이브러리를 이용한 비전프로그램 개발
 ---
 
+## 📅 2025년 12월 26일 (Second Commit)
+**작성자:** indy  
+**검토자:** indy
+
+### 1. 개요
+- Blog 게시물 작성 코드: WPF와 OpenCV를 활용한 비전 프로그램 개발 방법 소개
+
+### 2. 진행 내용
+- WPF 기반의 OpenCV 영상처리 프로젝트 #24 적용. 
+- Perspective Transform 알고리즘 추가. (getPerspectiveTransform 사용)
+- 4점 지정하여 원근 변환 구현 (warpPerspective 구현)
+
+---
+
+
 
 ## 📅 2025년 12월 26일 (First Commit)
 **작성자:** indy  
@@ -12,6 +27,7 @@
 ### 2. 진행 내용
 - WPF 기반의 OpenCV 영상처리 프로젝트 #23 적용. 
 - Affine Transform 알고리즘 추가 (getAffineTransform 사용)
+- 3점 지정하여 기하학적 변환 구현 (warpAffine 구현)
 
 ---
 

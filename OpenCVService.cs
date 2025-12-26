@@ -369,6 +369,52 @@ namespace Vision_OpenCV_App
                             }
                         }
                         break;
+
+                    case "Perspective Transform":
+                        if (parameters is PerspectiveParams perspParams)
+                        {
+                            // 4개의 점이 유효한지 확인 (간단히 Pt4까지 찍혔는지 확인)
+                            if (perspParams.Pt1 == new Point2f(0, 0) && perspParams.Pt4 == new Point2f(0, 0))
+                            {
+                                resultMessage = "Perspective: 4개의 점을 지정해주세요.";
+                            }
+                            else
+                            {
+                                // 1. 입력 점 4개 (사용자가 찍은 R, G, B, Y)
+                                Point2f[] srcPoints = new Point2f[]
+                                {
+                                    perspParams.Pt1,
+                                    perspParams.Pt2,
+                                    perspParams.Pt3,
+                                    perspParams.Pt4
+                                };
+
+                                // 2. 출력 점 4개 (매핑될 위치)
+                                // 일반적인 순서: 좌상 -> 우상 -> 우하 -> 좌하 (Z 모양 혹은 시계방향)
+                                // 사용자가 찍는 순서도 이와 같다고 가정합니다.
+                                Point2f[] dstPoints = new Point2f[]
+                                {
+                                    new Point2f(0, 0),                        // 좌상단
+                                    new Point2f(_srcImage.Width, 0),          // 우상단
+                                    new Point2f(_srcImage.Width, _srcImage.Height), // 우하단 (Affine과 다름!)
+                                    new Point2f(0, _srcImage.Height)          // 좌하단
+                                };
+
+                                // 3. Perspective 변환 행렬 계산 (3x3 행렬)
+                                Mat perspectiveMatrix = Cv2.GetPerspectiveTransform(srcPoints, dstPoints);
+
+                                // 4. warpPerspective 적용
+                                Cv2.WarpPerspective(_srcImage, _destImage, perspectiveMatrix, _srcImage.Size(),
+                                    perspParams.Interpolation, BorderTypes.Constant, Scalar.All(0));
+
+                                perspectiveMatrix.Dispose();
+                                resultMessage += $": Perspective Applied";
+                            }
+                        }
+                        break;
+
+
+
                 }
             });
 

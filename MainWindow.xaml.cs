@@ -70,6 +70,10 @@ namespace Vision_OpenCV_App
         private List<System.Windows.Point> _affinePoints = new List<System.Windows.Point>();
         private List<Ellipse> _affineVisuals = new List<Ellipse>();
 
+        // Perspective 변환용 점 저장 리스트
+        private List<Point> _perspectivePoints = new List<Point>();
+        private List<Ellipse> _perspectiveVisuals = new List<Ellipse>();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -157,8 +161,9 @@ namespace Vision_OpenCV_App
                 Point mousePos = e.GetPosition(ImgView);
                 var bitmap  = ImgView.Source as BitmapSource;
 
-                #region Affine Point
                 var vm = this.DataContext as MainViewModel;
+
+                #region Affine Point
                 if (vm != null && vm.SelectedAlgorithm == "Affine Transform")
                 {
                     if (_affinePoints.Count >= 3)
@@ -211,6 +216,63 @@ namespace Vision_OpenCV_App
 
                 #endregion
 
+                #region Perspective Point
+                if(vm != null && vm.SelectedAlgorithm == "Perspective Transform")
+                {
+                    if(mousePos.X >= 0 && mousePos.X < bitmap.PixelWidth && 
+                       mousePos.Y >= 0 && mousePos.Y < bitmap.PixelHeight)
+                    {
+                        if (_perspectivePoints.Count >= 4)
+                        {
+                            foreach (var el in _perspectiveVisuals) OverlayCanvas.Children.Remove(el);
+                            _perspectivePoints.Clear();
+                            _perspectiveVisuals.Clear();
+                        }
+
+                        // 점 추가
+                        _perspectivePoints.Add(mousePos);
+
+                        // 시각화 (원 그리기)
+                        Ellipse pointCircle = new Ellipse()
+                        {
+                            Width = 10,
+                            Height = 10
+                        };
+
+                        // 색 지정
+                        int cnt = _perspectivePoints.Count;
+                        if(cnt == 1)
+                            pointCircle.Fill = Brushes.Red;
+                        else if(cnt == 2)
+                            pointCircle.Fill = Brushes.Lime;
+                        else if(cnt == 3)
+                            pointCircle.Fill = Brushes.Blue;
+                        else
+                            pointCircle.Fill = Brushes.Yellow;
+
+                        Canvas.SetLeft(pointCircle, mousePos.X - 5);
+                        Canvas.SetTop(pointCircle, mousePos.Y - 5);
+
+                        OverlayCanvas.Children.Add(pointCircle);
+                        _perspectiveVisuals.Add(pointCircle);
+
+                        // ViewModel 파라미터 업데이트
+
+                        if(vm.CurrentParameters is PerspectiveParams persParam)
+                        {
+                            if(cnt >=1)
+                                persParam.Pt1 = new OpenCvSharp.Point2f((float)_perspectivePoints[0].X, (float)_perspectivePoints[0].Y);
+                            if(cnt >=2)
+                                persParam.Pt2 = new OpenCvSharp.Point2f((float)_perspectivePoints[1].X, (float)_perspectivePoints[1].Y);
+                            if(cnt >=3)
+                                persParam.Pt3 = new OpenCvSharp.Point2f((float)_perspectivePoints[2].X, (float)_perspectivePoints[2].Y);
+                            if(cnt >=4)
+                                persParam.Pt4 = new OpenCvSharp.Point2f((float)_perspectivePoints[3].X, (float)_perspectivePoints[3].Y);
+                        }
+                    }
+                    return;
+                }
+                #endregion
 
 
                 if (RoiRect.Visibility == Visibility.Visible && _currentRoiRect.Contains(mousePos))

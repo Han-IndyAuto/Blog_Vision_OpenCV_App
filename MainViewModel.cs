@@ -141,7 +141,8 @@ namespace Vision_OpenCV_App
                 "Equalize",
                 "CLAHE",
                 "Geometric Transformation",
-                "Affine Transform"
+                "Affine Transform",
+                "Perspective Transform"
             };
         }
 
@@ -196,6 +197,10 @@ namespace Vision_OpenCV_App
 
                 case "Affine Transform":
                     CurrentParameters = new AffineParams();
+                    break;
+
+                case "Perspective Transform":
+                    CurrentParameters = new PerspectiveParams();
                     break;
 
                 default:
