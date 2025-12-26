@@ -326,6 +326,49 @@ namespace Vision_OpenCV_App
                             resultMessage += $": Geometric (Move:{geoParams.MoveX},{geoParams.MoveY} | Rot:{geoParams.Angle} | Scale:{geoParams.Scale})";
                         }
                         break;
+
+                    case "Affine Transform":
+                        if (parameters is AffineParams affineParams)
+                        { 
+                            // 3개의 점이 유효한지 확인
+                            if(affineParams.Pt1.X == 0 && affineParams.Pt1.Y == 0 ||
+                               affineParams.Pt2.X == 0 && affineParams.Pt2.Y == 0 ||
+                               affineParams.Pt3.X == 0 && affineParams.Pt3.Y == 0)
+                            {
+                                resultMessage = "Affine: 3개의 점을 지정해 주세요.";
+                                break;
+                            }
+                            else
+                            {
+                                // 입력 점 3개 설정
+                                Point2f[] srcPoints = new Point2f[]
+                                { 
+                                    affineParams.Pt1,
+                                    affineParams.Pt2,
+                                    affineParams.Pt3
+                                };
+
+                                // 출력 점 3개 설정.
+                                // 일반적으로 원본 이미지의 좌상단, 우상단, 좌하단으로 매핑하지만,
+                                // 사용자가 선택한 3개의 점이 이루는 평행사변형 영역이 직사각형 형태로 퍼지게 됨.
+                                Point2f[] dstPoionts = new Point2f[]
+                                {
+                                    new Point2f(0, 0),                  // 좌상단
+                                    new Point2f(_srcImage.Width, 0),    // 우상단 (w, 0)
+                                    new Point2f(0, _srcImage.Height)    // 좌하단 (0, h)
+                                };
+
+                                // Affine 변환 행렬 계산
+                                Mat affineMatrix = Cv2.GetAffineTransform(srcPoints, dstPoionts);
+                                // Affine 변환 적용
+                                Cv2.WarpAffine(_srcImage, _destImage, affineMatrix, _srcImage.Size(),
+                                    affineParams.Interpolation, BorderTypes.Constant, Scalar.All(0));
+
+                                affineMatrix.Dispose();
+                                resultMessage += $": Affine Transform";
+                            }
+                        }
+                        break;
                 }
             });
 

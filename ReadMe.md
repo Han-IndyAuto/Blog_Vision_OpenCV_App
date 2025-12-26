@@ -2,6 +2,19 @@
 ---
 
 
+## 📅 2025년 12월 26일 (First Commit)
+**작성자:** indy  
+**검토자:** indy
+
+### 1. 개요
+- Blog 게시물 작성 코드: WPF와 OpenCV를 활용한 비전 프로그램 개발 방법 소개
+
+### 2. 진행 내용
+- WPF 기반의 OpenCV 영상처리 프로젝트 #23 적용. 
+- Affine Transform 알고리즘 추가 (getAffineTransform 사용)
+
+---
+
 ## 📅 2025년 12월 24일 (Second Commit)
 **작성자:** indy  
 **검토자:** indy

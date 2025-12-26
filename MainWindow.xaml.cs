@@ -10,6 +10,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
+//using OpenCvSharp;      // Point2f
+
 namespace Vision_OpenCV_App
 {
     public enum DrawingMode
@@ -63,6 +65,10 @@ namespace Vision_OpenCV_App
         private DrawingMode _currentDrawMode = DrawingMode.None;
         private Point _drawStartPoint;      // 그리기 시작점 (이미지 좌표)
         private Shape _tempShape;           // 그리기 도중 보여줄 임시 도형.
+
+        // Affine 변환용 점 저장 리스트
+        private List<System.Windows.Point> _affinePoints = new List<System.Windows.Point>();
+        private List<Ellipse> _affineVisuals = new List<Ellipse>();
 
         public MainWindow()
         {
@@ -150,6 +156,62 @@ namespace Vision_OpenCV_App
             {
                 Point mousePos = e.GetPosition(ImgView);
                 var bitmap  = ImgView.Source as BitmapSource;
+
+                #region Affine Point
+                var vm = this.DataContext as MainViewModel;
+                if (vm != null && vm.SelectedAlgorithm == "Affine Transform")
+                {
+                    if (_affinePoints.Count >= 3)
+                    {
+                        _affinePoints.Clear();
+
+                        foreach (var el in _affineVisuals)
+                            OverlayCanvas.Children.Remove(el);
+
+                        _affineVisuals.Clear();
+                    }
+
+                    // 점 추가
+                    _affinePoints.Add(mousePos);
+
+                    // 시각화 (원 그리기)
+                    Ellipse pointCircle = new Ellipse()
+                    {
+                        Width = 10,
+                        Height = 10
+                    };
+
+                    // 색 지정
+                    if(_affinePoints.Count == 1) 
+                        pointCircle.Fill = Brushes.Red;
+                    else if(_affinePoints.Count == 2) 
+                        pointCircle.Fill = Brushes. Lime;
+                    else 
+                        pointCircle.Fill = Brushes.Blue;
+
+                    // 위치 지정
+                    Canvas.SetLeft(pointCircle, mousePos.X - 5);
+                    Canvas.SetTop(pointCircle, mousePos.Y - 5);
+
+                    OverlayCanvas.Children.Add(pointCircle);
+                    _affineVisuals.Add(pointCircle);
+
+                    // ViewMode 파라미터 업데이트
+                    if(vm.CurrentParameters is AffineParams affineParams)
+                    {
+                        if(_affinePoints.Count >= 1)
+                            affineParams.Pt1 = new OpenCvSharp.Point2f((float)_affinePoints[0].X, (float)_affinePoints[0].Y);
+                        if(_affinePoints.Count >= 2)
+                            affineParams.Pt2 = new OpenCvSharp.Point2f((float)_affinePoints[1].X, (float)_affinePoints[1].Y);
+                        if(_affinePoints.Count >= 3)
+                            affineParams.Pt3 = new OpenCvSharp.Point2f((float)_affinePoints[2].X, (float)_affinePoints[2].Y);
+                    }
+                    return;     // Affine 모드 일때 그리/ROI 관련 나머지 코드를 실행하지 않도록 함.
+                }
+
+                #endregion
+
+
 
                 if (RoiRect.Visibility == Visibility.Visible && _currentRoiRect.Contains(mousePos))
                 {

@@ -332,6 +332,21 @@
             </StackPanel>
         </DataTemplate>
 
+        <!-- [신규] Affine Params 템플릿 -->
+        <DataTemplate DataType="{x:Type local:AffineParams}">
+            <StackPanel>
+                <TextBlock Text="Affine Transformation" Margin="0,0,0,5" FontWeight="Bold"/>
+
+                <TextBlock Text="Selected Points (3 Points)" Margin="0,5,0,0"/>
+                <TextBox Text="{Binding PointInfo, Mode=OneWay}" IsReadOnly="True" Background="#EEEEEE" Padding="3" Margin="0,2,0,0"/>
+
+                <TextBlock Text="* 이미지 위를 클릭하여 3개의 점을 순서대로 지정하세요." Foreground="Gray" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                <TextBlock Text="(빨강 -> 초록 -> 파랑)" Foreground="Gray" FontSize="11" Margin="0,0,0,0" TextWrapping="Wrap"/>
+
+                <TextBlock Text="Interpolation (보간법)" Margin="0,10,0,0"/>
+                <ComboBox ItemsSource="{Binding InterpolationSource}" SelectedItem="{Binding Interpolation}" Margin="0,2,0,0" Height="25"/>
+            </StackPanel>
+        </DataTemplate>
 
 
         <DataTemplate DataType="{x:Type local:AlgorithmParameters}">

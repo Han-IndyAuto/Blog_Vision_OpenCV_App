@@ -29,7 +29,7 @@ namespace Vision_OpenCV_App
             get => _thresholdValue;
             set
             {
-                if(_thresholdValue == value) return;
+                if (_thresholdValue == value) return;
                 _thresholdValue = value;
 
                 //OnPropertyChanged("ThresholdValue");
@@ -43,7 +43,7 @@ namespace Vision_OpenCV_App
             get => _thresholdMax;
             set
             {
-                if(_thresholdMax == value) return;
+                if (_thresholdMax == value) return;
                 _thresholdMax = value;
 
                 OnPropertyChanged();
@@ -87,7 +87,7 @@ namespace Vision_OpenCV_App
             get => _blockSize;
             set
             {
-                if(_blockSize == value) return;
+                if (_blockSize == value) return;
 
                 if (value % 2 == 0) value++;    // 짝수가 들어오면 +1 해서 홀수 생성.
                 if (value < 3) value = 3;        // 최소값 3
@@ -102,7 +102,7 @@ namespace Vision_OpenCV_App
             get => _constantC;
             set
             {
-                if(_constantC == value) return;
+                if (_constantC == value) return;
                 _constantC = value;
                 OnPropertyChanged();
             }
@@ -298,11 +298,11 @@ namespace Vision_OpenCV_App
         public double MoveX
         {
             get => _moveX;
-            set 
+            set
             {
                 if (_moveX == value) return;
 
-                _moveX = value; 
+                _moveX = value;
                 OnPropertyChanged();
             }
         }
@@ -312,11 +312,11 @@ namespace Vision_OpenCV_App
         public double MoveY
         {
             get => _moveY;
-            set 
+            set
             {
                 if (_moveY == value) return;
 
-                _moveY = value; 
+                _moveY = value;
                 OnPropertyChanged();
             }
         }
@@ -326,12 +326,12 @@ namespace Vision_OpenCV_App
         public double Angle
         {
             get => _angle;
-            set 
+            set
             {
                 if (_angle == value) return;
 
-                _angle = value; 
-                OnPropertyChanged(); 
+                _angle = value;
+                OnPropertyChanged();
             }
         }
 
@@ -340,11 +340,11 @@ namespace Vision_OpenCV_App
         public double Scale
         {
             get => _scale;
-            set 
+            set
             {
                 if (_scale == value) return;
-                
-                _scale = value; 
+
+                _scale = value;
                 OnPropertyChanged();
             }
         }
@@ -354,11 +354,11 @@ namespace Vision_OpenCV_App
         public InterpolationFlags Interpolation
         {
             get => _interpolation;
-            set 
+            set
             {
                 if (_interpolation != value) return;
-                
-                _interpolation = value; 
+
+                _interpolation = value;
                 OnPropertyChanged();
             }
         }
@@ -372,5 +372,73 @@ namespace Vision_OpenCV_App
             InterpolationFlags.Lanczos4 // 고품질 (가장 느림)
         };
     }
+
+    public class AffineParams : AlgorithmParameters
+    {
+        // 화면에 보여줄 텍스트 정보
+        public string PointInfo => $"P1:({Pt1.X:F0}, {Pt1.Y:F0}) P2:({Pt2.X:F0}, {Pt2.Y:F0}) P3:({Pt3.X:F0}, {Pt3.Y:F0})";
+
+        // 3개의 점 좌표 (화면 표시 및 warpAffine 입력)
+        private Point2f _pt1 = new Point2f();
+        public Point2f Pt1
+        {
+            get => _pt1;
+            set
+            {
+                if (_pt1 == value) return;
+
+                _pt1 = value;
+                OnPropertyChanged(nameof(PointInfo));
+            }
+        }
+        private Point2f _pt2 = new Point2f();
+        public Point2f Pt2
+        {
+            get => _pt2;
+            set
+            {
+                if (_pt2 == value) return;
+
+                _pt2 = value;
+                OnPropertyChanged(nameof(PointInfo));
+            }
+        }
+        private Point2f _pt3 = new Point2f();
+        public Point2f Pt3
+        {
+            get => _pt3;
+            set
+            {
+                if (_pt3 == value) return;
+
+                _pt3 = value;
+                OnPropertyChanged(nameof(PointInfo));
+            }
+        }
+
+
+        // Interpolation Method
+        private InterpolationFlags _interpolation = InterpolationFlags.Linear;
+        public InterpolationFlags Interpolation
+        {
+            get => _interpolation;
+            set
+            {
+                if (_interpolation == value) return;
+
+                _interpolation = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public List<InterpolationFlags> InterpolationSource { get; } = new List<InterpolationFlags>
+        {
+            InterpolationFlags.Nearest,
+            InterpolationFlags.Linear,
+            InterpolationFlags.Cubic,
+            InterpolationFlags.Lanczos4
+        };
+    }
+
 
 }

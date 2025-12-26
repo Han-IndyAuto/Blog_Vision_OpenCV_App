@@ -127,6 +127,11 @@ namespace Vision_OpenCV_App
             {
                 //"ROI Selection (영역 설정)",
                 //"Gray 처리", // (OpenCV 서비스 로직에서 예외처리 혹은 구현 필요, 여기선 생략)
+                //"Morphology (모폴로지)",
+                //"Edge Detection (엣지 검출)",
+                //"Blob Analysis (블롭 분석)",
+                //"TemplateMatching (TM)",
+                //"Geometric Model Finder (GMF)" // 이름 유지, 내부 로직은 Template Matching
 
                 "Threshold",
                 "Otsu Threshold",
@@ -135,13 +140,8 @@ namespace Vision_OpenCV_App
                 "Normalize",
                 "Equalize",
                 "CLAHE",
-                "Geometric Transformation"
-
-                //"Morphology (모폴로지)",
-                //"Edge Detection (엣지 검출)",
-                //"Blob Analysis (블롭 분석)",
-                //"TemplateMatching (TM)",
-                //"Geometric Model Finder (GMF)" // 이름 유지, 내부 로직은 Template Matching
+                "Geometric Transformation",
+                "Affine Transform"
             };
         }
 
@@ -192,6 +192,10 @@ namespace Vision_OpenCV_App
 
                 case "Geometric Transformation":
                     CurrentParameters = new GeometricParams();
+                    break;
+
+                case "Affine Transform":
+                    CurrentParameters = new AffineParams();
                     break;
 
                 default:
