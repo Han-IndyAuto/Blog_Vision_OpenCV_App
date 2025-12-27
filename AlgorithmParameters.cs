@@ -520,4 +520,73 @@ namespace Vision_OpenCV_App
         };
     }
 
+
+    // [신규] Remap (Lens Distortion) 파라미터
+    public class RemapParams : AlgorithmParameters
+    {
+        // 파장 (Wavelength)
+        private double _wavelength = 20.0;
+        public double Wavelength
+        {
+            get => _wavelength;
+            set 
+            {
+                if (_wavelength == value) return; 
+                    
+                _wavelength = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 진폭 (Amplitude)
+        private double _amplitude = 10.0;
+        public double Amplitude
+        {
+            get => _amplitude;
+            set
+            {
+                if (_amplitude == value) return; 
+                
+                _amplitude = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 위상 (Phase)
+        private double _phase = 0.0;
+        public double Phase
+        {
+            get => _phase;
+            set
+            {
+                if (_phase == value) return; 
+               
+                _phase = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 보간법
+        private InterpolationFlags _interpolation = InterpolationFlags.Linear;
+        public InterpolationFlags Interpolation
+        {
+            get => _interpolation;
+            set 
+            {
+                if (_interpolation == value) return; 
+                
+                _interpolation = value; 
+                OnPropertyChanged();  
+            }
+        }
+
+        public List<InterpolationFlags> InterpolationSource { get; } = new List<InterpolationFlags>
+        {
+            InterpolationFlags.Nearest,
+            InterpolationFlags.Linear,
+            InterpolationFlags.Cubic,
+            InterpolationFlags.Lanczos4
+        };
+    }
+
 }

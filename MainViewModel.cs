@@ -142,7 +142,8 @@ namespace Vision_OpenCV_App
                 "CLAHE",
                 "Geometric Transformation",
                 "Affine Transform",
-                "Perspective Transform"
+                "Perspective Transform",
+                "Lens Distortion (Remap)" 
             };
         }
 
@@ -201,6 +202,10 @@ namespace Vision_OpenCV_App
 
                 case "Perspective Transform":
                     CurrentParameters = new PerspectiveParams();
+                    break;
+
+                case "Lens Distortion (Remap)":
+                    CurrentParameters = new RemapParams();
                     break;
 
                 default:

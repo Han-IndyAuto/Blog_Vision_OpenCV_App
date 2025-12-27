@@ -414,6 +414,60 @@ namespace Vision_OpenCV_App
                         break;
 
 
+                    case "Lens Distortion (Remap)":
+                        if (parameters is RemapParams remapParams)
+                        {
+                            // 1. 매핑용 행렬 생성 (32비트 float 타입 필요)
+                            Mat mapX = new Mat(_srcImage.Size(), MatType.CV_32FC1);
+                            Mat mapY = new Mat(_srcImage.Size(), MatType.CV_32FC1);
+
+                            // 2. 픽셀별 매핑 좌표 계산 (비선형 변환)
+                            // 병렬 루프를 사용하여 속도 최적화 (대량의 픽셀 연산이므로)
+                            // 또는 단순히 중첩 for문 사용
+                            int width = _srcImage.Width;
+                            int height = _srcImage.Height;
+                            double wavelength = remapParams.Wavelength;
+                            double amplitude = remapParams.Amplitude;
+                            double phase = remapParams.Phase * (Math.PI / 180.0); // Degree -> Radian
+
+                            // OpenCvSharp의 Indexer를 사용하여 픽셀 접근 속도 향상
+                            var indexerX = mapX.GetGenericIndexer<float>();
+                            var indexerY = mapY.GetGenericIndexer<float>();
+
+                            Parallel.For(0, height, y =>
+                            {
+                                for (int x = 0; x < width; x++)
+                                {
+                                    // X 좌표 매핑: 원래 x 위치 + Sin 함수에 의한 왜곡
+                                    // 예: x' = x + A * sin((y / wavelength) + phase)
+                                    // Y축(y)을 따라 내려가면서 X좌표가 물결치도록 설정 (세로 물결)
+                                    // 요청하신 "X는 Sin" 반영
+                                    float newX = (float)(x + amplitude * Math.Sin(y / wavelength + phase));
+
+                                    // Y 좌표 매핑: 원래 y 위치 + Cos 함수에 의한 왜곡
+                                    // 예: y' = y + A * cos((x / wavelength) + phase)
+                                    // X축(x)을 따라 가면서 Y좌표가 물결치도록 설정 (가로 물결)
+                                    // 요청하신 "Y는 Cos" 반영
+                                    float newY = (float)(y + amplitude * Math.Cos(x / wavelength + phase));
+
+                                    // 매핑 테이블에 저장
+                                    indexerX[y, x] = newX;
+                                    indexerY[y, x] = newY;
+                                }
+                            });
+
+                            // 3. Remap 적용
+                            // 입력 이미지(_srcImage)의 픽셀을 mapX, mapY 규칙에 따라 결과 이미지(_destImage)로 옮김
+                            Cv2.Remap(_srcImage, _destImage, mapX, mapY,
+                                remapParams.Interpolation, BorderTypes.Constant, Scalar.All(0));
+
+                            // 리소스 정리
+                            mapX.Dispose();
+                            mapY.Dispose();
+
+                            resultMessage += $": Remap (Wave:{remapParams.Wavelength}, Amp:{remapParams.Amplitude})";
+                        }
+                        break;
 
                 }
             });
