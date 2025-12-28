@@ -520,10 +520,29 @@ namespace Vision_OpenCV_App
         };
     }
 
+    // 왜곡 모드 선택 열거형
+    public enum DistortionMode
+    {
+        SinCosWave,     // 기존 물결 효과
+        LensSimulate    // 신규 볼록/오목 렌즈 효과
+    }
 
     // [신규] Remap (Lens Distortion) 파라미터
     public class RemapParams : AlgorithmParameters
     {
+        private DistortionMode _mode = DistortionMode.SinCosWave;
+        public DistortionMode Mode
+        {
+            get => _mode;
+            set
+            {
+                if (_mode == value) return;
+
+                _mode = value;
+                OnPropertyChanged();
+            }
+        }
+
         // 파장 (Wavelength)
         private double _wavelength = 20.0;
         public double Wavelength
@@ -566,6 +585,49 @@ namespace Vision_OpenCV_App
             }
         }
 
+        public string PointInfo => $"Center: ({Center.X:F0}, {Center.Y:F0})";
+
+        private Point2f _center = new Point2f(0, 0);
+        public Point2f Center
+        {
+            get => _center;
+            set
+            {
+                if (_center == value) return;
+                _center = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(PointInfo));
+            }
+        }
+
+        private double _exponent = 1.0; // 1.0=원본, <1.0 오목, >1.0 볼록
+        public double Exponent
+        {
+            get => _exponent;
+            set 
+            { 
+                if (_exponent == value) return; 
+                
+                _exponent = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        private double _scale = 0.5; // 반경 크기 비율
+        public double Scale
+        {
+            get => _scale;
+            set 
+            {
+                if (_scale == value) return; 
+                
+                _scale = value; 
+                OnPropertyChanged();
+            }
+        }
+
+
+
         // 보간법
         private InterpolationFlags _interpolation = InterpolationFlags.Linear;
         public InterpolationFlags Interpolation
@@ -587,6 +649,9 @@ namespace Vision_OpenCV_App
             InterpolationFlags.Cubic,
             InterpolationFlags.Lanczos4
         };
+
+        // 소스 목록
+        public List<DistortionMode> ModeSource { get; } = Enum.GetValues(typeof(DistortionMode)).Cast<DistortionMode>().ToList();
     }
 
 }

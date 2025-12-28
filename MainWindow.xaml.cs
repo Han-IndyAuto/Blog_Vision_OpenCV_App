@@ -274,6 +274,26 @@ namespace Vision_OpenCV_App
                 }
                 #endregion
 
+                #region Remap LensDistortion
+                if (vm != null && vm.CurrentParameters is RemapParams remapParams)
+                {
+                    // LensSimulate 모드일 때만 클릭 좌표 업데이트
+                    if (remapParams.Mode == DistortionMode.LensSimulate)
+                    {
+                        if (mousePos.X >= 0 && mousePos.X < bitmap.PixelWidth &&
+                            mousePos.Y >= 0 && mousePos.Y < bitmap.PixelHeight)
+                        {
+                            remapParams.Center = new OpenCvSharp.Point2f((float)mousePos.X, (float)mousePos.Y);
+
+                            // 십자가 그리기
+                            OverlayCanvas.Children.Clear();
+                            DrawCrosshair(mousePos);
+                        }
+                        return; // 렌즈 모드면 여기서 종료
+                    }
+                    // SinCosWave 모드면 클릭 이벤트를 무시하거나, 아래의 다른 로직(ROI 등)으로 넘어감
+                }
+                #endregion
 
                 if (RoiRect.Visibility == Visibility.Visible && _currentRoiRect.Contains(mousePos))
                 {
@@ -687,6 +707,21 @@ namespace Vision_OpenCV_App
             imgTranslate.X = (ZoomBorder.ActualWidth - finalWidth) / 2;
             imgTranslate.Y = (ZoomBorder.ActualHeight - finalHeight) / 2;
         }
+
+        // 십자가 그리기 헬퍼 함수 (클래스 내부에 추가)
+        private void DrawCrosshair(Point center)
+        {
+            double size = 15;
+            double thickness = 2;
+            Brush brush = Brushes.Magenta;
+
+            Line l1 = new Line { X1 = center.X - size, Y1 = center.Y, X2 = center.X + size, Y2 = center.Y, Stroke = brush, StrokeThickness = thickness };
+            Line l2 = new Line { X1 = center.X, Y1 = center.Y - size, X2 = center.X, Y2 = center.Y + size, Stroke = brush, StrokeThickness = thickness };
+
+            OverlayCanvas.Children.Add(l1);
+            OverlayCanvas.Children.Add(l2);
+        }
+
 
         private void MenuItem_Crop_Click(object sender, RoutedEventArgs e)
         {

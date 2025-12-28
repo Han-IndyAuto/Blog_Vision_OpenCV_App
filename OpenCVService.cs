@@ -415,58 +415,200 @@ namespace Vision_OpenCV_App
 
 
                     case "Lens Distortion (Remap)":
+                        #region Manual Calculation (Old)
+                        /*
                         if (parameters is RemapParams remapParams)
                         {
-                            // 1. 매핑용 행렬 생성 (32비트 float 타입 필요)
+                            int w = _srcImage.Width;
+                            int h = _srcImage.Height;
+
                             Mat mapX = new Mat(_srcImage.Size(), MatType.CV_32FC1);
                             Mat mapY = new Mat(_srcImage.Size(), MatType.CV_32FC1);
 
-                            // 2. 픽셀별 매핑 좌표 계산 (비선형 변환)
-                            // 병렬 루프를 사용하여 속도 최적화 (대량의 픽셀 연산이므로)
-                            // 또는 단순히 중첩 for문 사용
-                            int width = _srcImage.Width;
-                            int height = _srcImage.Height;
-                            double wavelength = remapParams.Wavelength;
-                            double amplitude = remapParams.Amplitude;
-                            double phase = remapParams.Phase * (Math.PI / 180.0); // Degree -> Radian
-
-                            // OpenCvSharp의 Indexer를 사용하여 픽셀 접근 속도 향상
                             var indexerX = mapX.GetGenericIndexer<float>();
                             var indexerY = mapY.GetGenericIndexer<float>();
 
-                            Parallel.For(0, height, y =>
+                            // --- 모드 분기 ---
+                            if (remapParams.Mode == DistortionMode.SinCosWave)
                             {
-                                for (int x = 0; x < width; x++)
+                                // [모드 1] 기존 Sin/Cos 물결
+                                double wavelength = remapParams.Wavelength;
+                                double amplitude = remapParams.Amplitude;
+                                double phase = remapParams.Phase * (Math.PI / 180.0);
+
+                                Parallel.For(0, h, y =>
                                 {
-                                    // X 좌표 매핑: 원래 x 위치 + Sin 함수에 의한 왜곡
-                                    // 예: x' = x + A * sin((y / wavelength) + phase)
-                                    // Y축(y)을 따라 내려가면서 X좌표가 물결치도록 설정 (세로 물결)
-                                    // 요청하신 "X는 Sin" 반영
-                                    float newX = (float)(x + amplitude * Math.Sin(y / wavelength + phase));
+                                    for (int x = 0; x < w; x++)
+                                    {
+                                        float newX = (float)(x + amplitude * Math.Sin(y / wavelength + phase));
+                                        float newY = (float)(y + amplitude * Math.Cos(x / wavelength + phase));
+                                        indexerX[y, x] = newX;
+                                        indexerY[y, x] = newY;
+                                    }
+                                });
+                                resultMessage += $": Wave (W:{wavelength}, A:{amplitude})";
+                            }
+                            else if (remapParams.Mode == DistortionMode.LensSimulate)
+                            {
+                                // [모드 2] 볼록/오목 렌즈
+                                float cx = remapParams.Center.X;
+                                float cy = remapParams.Center.Y;
+                                double exp = remapParams.Exponent;
+                                double maxRadius = (Math.Min(w, h) / 2.0) * remapParams.Scale;
+                                if (maxRadius < 1.0) maxRadius = 1.0;
 
-                                    // Y 좌표 매핑: 원래 y 위치 + Cos 함수에 의한 왜곡
-                                    // 예: y' = y + A * cos((x / wavelength) + phase)
-                                    // X축(x)을 따라 가면서 Y좌표가 물결치도록 설정 (가로 물결)
-                                    // 요청하신 "Y는 Cos" 반영
-                                    float newY = (float)(y + amplitude * Math.Cos(x / wavelength + phase));
+                                Parallel.For(0, h, y =>
+                                {
+                                    for (int x = 0; x < w; x++)
+                                    {
+                                        double dx = x - cx;
+                                        double dy = y - cy;
+                                        double r = Math.Sqrt(dx * dx + dy * dy);
 
-                                    // 매핑 테이블에 저장
-                                    indexerX[y, x] = newX;
-                                    indexerY[y, x] = newY;
-                                }
-                            });
+                                        if (r < maxRadius)
+                                        {
+                                            double rNorm = r / maxRadius;
+                                            double rNewNorm = Math.Pow(rNorm, exp);
+                                            double rNew = rNewNorm * maxRadius;
+                                            double scaleFactor = (r == 0) ? 1.0 : (rNew / r);
 
-                            // 3. Remap 적용
-                            // 입력 이미지(_srcImage)의 픽셀을 mapX, mapY 규칙에 따라 결과 이미지(_destImage)로 옮김
+                                            indexerX[y, x] = (float)(cx + dx * scaleFactor);
+                                            indexerY[y, x] = (float)(cy + dy * scaleFactor);
+                                        }
+                                        else
+                                        {
+                                            indexerX[y, x] = x;
+                                            indexerY[y, x] = y;
+                                        }
+                                    }
+                                });
+                                resultMessage += $": Lens (Exp:{exp:F2}, Scale:{remapParams.Scale:P0})";
+                            }
+
+                            // Remap 적용 (공통)
                             Cv2.Remap(_srcImage, _destImage, mapX, mapY,
                                 remapParams.Interpolation, BorderTypes.Constant, Scalar.All(0));
 
-                            // 리소스 정리
                             mapX.Dispose();
                             mapY.Dispose();
+                        }*/
+                        #endregion
 
-                            resultMessage += $": Remap (Wave:{remapParams.Wavelength}, Amp:{remapParams.Amplitude})";
+                        #region Polar Method (New)
+                        if (parameters is RemapParams remapParams)
+                        {
+                            int w = _srcImage.Width;
+                            int h = _srcImage.Height;
+
+                            // Remap을 위한 최종 맵 (32비트 float 필수)
+                            Mat mapX = new Mat(_srcImage.Size(), MatType.CV_32FC1);
+                            Mat mapY = new Mat(_srcImage.Size(), MatType.CV_32FC1);
+
+                            // --- 모드 분기 ---
+                            if (remapParams.Mode == DistortionMode.SinCosWave)
+                            {
+                                // [기존 방식 유지] Sin/Cos 물결 효과
+                                var indexerX = mapX.GetGenericIndexer<float>();
+                                var indexerY = mapY.GetGenericIndexer<float>();
+
+                                double wavelength = remapParams.Wavelength;
+                                double amplitude = remapParams.Amplitude;
+                                double phase = remapParams.Phase * (Math.PI / 180.0);
+
+                                Parallel.For(0, h, y =>
+                                {
+                                    for (int x = 0; x < w; x++)
+                                    {
+                                        float newX = (float)(x + amplitude * Math.Sin(y / wavelength + phase));
+                                        float newY = (float)(y + amplitude * Math.Cos(x / wavelength + phase));
+                                        indexerX[y, x] = newX;
+                                        indexerY[y, x] = newY;
+                                    }
+                                });
+                                resultMessage += $": Wave (W:{wavelength}, A:{amplitude})";
+                            }
+                            else if (remapParams.Mode == DistortionMode.LensSimulate)
+                            {
+                                // [신규 방식 적용] CartToPolar & PolarToCart 사용
+                                float cx = remapParams.Center.X;
+                                float cy = remapParams.Center.Y;
+                                double exp = remapParams.Exponent;
+                                double maxRadius = (Math.Min(w, h) / 2.0) * remapParams.Scale;
+                                if (maxRadius < 1.0) maxRadius = 1.0;
+
+                                // 1. 상대 좌표(Relative Coordinates) 생성
+                                // mapX, mapY에 (x - cx), (y - cy) 값을 먼저 채웁니다.
+                                var indexerX = mapX.GetGenericIndexer<float>();
+                                var indexerY = mapY.GetGenericIndexer<float>();
+
+                                Parallel.For(0, h, y =>
+                                {
+                                    for (int x = 0; x < w; x++)
+                                    {
+                                        // 클릭한 직교좌표를 극좌표 변환을 위해 중심점 기준의 상대좌표로 변경
+                                        indexerX[y, x] = x - cx;
+                                        indexerY[y, x] = y - cy;
+                                    }
+                                });
+
+                                // 2. 직교좌표(x, y) -> 극좌표(mag, ang) 변환
+                                // mag: 거리(r), ang: 각도(theta)
+                                using (Mat mag = new Mat())
+                                using (Mat ang = new Mat())
+                                {
+                                    Cv2.CartToPolar(mapX, mapY, mag, ang);
+
+                                    // 3. 거리(Magnitude)에 왜곡 효과 적용
+                                    // 조건부 비선형 변환이므로 병렬 루프로 처리
+                                    var indexerMag = mag.GetGenericIndexer<float>();
+
+                                    Parallel.For(0, h, y =>
+                                    {
+                                        for (int x = 0; x < w; x++)
+                                        {
+                                            float r = indexerMag[y, x];
+
+                                            // 설정된 반지름 안쪽만 왜곡
+                                            if (r < maxRadius)
+                                            {
+                                                // 정규화: 0.0 ~ 1.0
+                                                float rNorm = r / (float)maxRadius;
+
+                                                // 왜곡 적용: r_new = r_norm ^ exp
+                                                // (Inverse Mapping 원리에 따라 exp > 1이면 확대(볼록), exp < 1이면 축소(오목))
+                                                float rNewNorm = (float)Math.Pow(rNorm, exp);
+
+                                                // 실제 거리로 복원
+                                                float rNew = rNewNorm * (float)maxRadius;
+
+                                                indexerMag[y, x] = rNew;
+                                            }
+                                        }
+                                    });
+
+                                    // 4. 극좌표(mag, ang) -> 직교좌표(mapX, mapY) 복원
+                                    // 이 시점에서 mapX, mapY에는 왜곡된 상대 좌표가 들어갑니다.
+                                    Cv2.PolarToCart(mag, ang, mapX, mapY);
+                                }
+
+                                // 5. 절대 좌표로 변환 (중심점 더하기)
+                                // Remap 함수는 이미지 상의 절대 좌표(0~Width)를 필요로 합니다.
+                                // Cv2.Add를 사용하여 행렬 전체에 스칼라 값을 더합니다. (루프보다 빠르고 간결함)
+                                Cv2.Add(mapX, new Scalar(cx), mapX);
+                                Cv2.Add(mapY, new Scalar(cy), mapY);
+
+                                resultMessage += $": Lens (Polar Method, Exp:{exp:F2})";
+                            }
+
+                            // 6. Remap 적용 (공통)
+                            Cv2.Remap(_srcImage, _destImage, mapX, mapY,
+                                remapParams.Interpolation, BorderTypes.Constant, Scalar.All(0));
+
+                            mapX.Dispose();
+                            mapY.Dispose();
                         }
+                        #endregion
+
                         break;
 
                 }
