@@ -415,8 +415,9 @@ namespace Vision_OpenCV_App
 
 
                     case "Lens Distortion (Remap)":
+
+#if ManualCalculate
                         #region Manual Calculation (Old)
-                        /*
                         if (parameters is RemapParams remapParams)
                         {
                             int w = _srcImage.Width;
@@ -491,9 +492,9 @@ namespace Vision_OpenCV_App
 
                             mapX.Dispose();
                             mapY.Dispose();
-                        }*/
+                        }
                         #endregion
-
+#else
                         #region Polar Method (New)
                         if (parameters is RemapParams remapParams)
                         {
@@ -608,7 +609,7 @@ namespace Vision_OpenCV_App
                             mapY.Dispose();
                         }
                         #endregion
-
+#endif
                         break;
 
                 }

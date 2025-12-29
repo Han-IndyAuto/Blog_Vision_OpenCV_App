@@ -1,7 +1,20 @@
 # 📄 WPF OpenCV 라이브러리를 이용한 비전프로그램 개발
 ---
 
+## 📅 2025년 12월 29일 (First Commit)
+**작성자:** indy  
+**검토자:** indy
 
+### 1. 개요
+- Blog 게시물 작성 코드: WPF와 OpenCV를 활용한 비전 프로그램 개발 방법 소개
+
+### 2. 진행 내용
+- WPF 기반의 OpenCV 영상처리 프로젝트 #27 적용. 
+- Lens Distortion 알고리즘 추가. (볼록왜곡, 오목왜곡 구현)
+- Manual Calculation 방식 으로 구현.
+- Dubug 모드에서 조건부 컴파일 조건 설정: ManualCalculate 설정.
+
+---
 
 
 ## 📅 2025년 12월 28일 (First Commit)
@@ -14,6 +27,7 @@
 ### 2. 진행 내용
 - WPF 기반의 OpenCV 영상처리 프로젝트 #26 적용. 
 - Lens Distortion 알고리즘 추가. (볼록왜곡, 오목왜곡 구현)
+- OpenCV Polar 함수를 사용하여 구현.
 
 ---
 
