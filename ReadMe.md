@@ -1,6 +1,22 @@
 # 📄 WPF OpenCV 라이브러리를 이용한 비전프로그램 개발
 ---
 
+## 📅 2026년 01월 02일 (First Commit)
+**작성자:** indy  
+**검토자:** indy
+
+### 1. 개요
+- Blog 게시물 작성 코드: WPF와 OpenCV를 활용한 비전 프로그램 개발 방법 소개
+
+### 2. 진행 내용
+- WPF 기반의 OpenCV 영상처리 프로젝트 #28 적용. 
+- Camera Calibration 알고리즘 추가. (Chessboard 패턴 인식 및 카메라 보정 구현)
+
+---
+
+
+
+
 ## 📅 2025년 12월 29일 (First Commit)
 **작성자:** indy  
 **검토자:** indy

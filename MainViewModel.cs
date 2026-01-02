@@ -25,7 +25,7 @@ namespace Vision_OpenCV_App
 
         private OpenCVService _cvServices;
 
-        #region Preperties
+        #region Properties
 
         private string _mouseCoordinationInfo = "(X: 0, Y: 0)";
         public string MouseCoordinationInfo
@@ -39,8 +39,8 @@ namespace Vision_OpenCV_App
         }
 
 
-        private ImageSource _displayImage;
-        public ImageSource DisplayImage
+        private ImageSource? _displayImage;
+        public ImageSource? DisplayImage
         {
             // 화면이 "이미지 줘!" 하면 금고에서 꺼내줍니다.
             get => _displayImage;
@@ -91,8 +91,8 @@ namespace Vision_OpenCV_App
 
         public ObservableCollection<string> AlgorithmList { get; set; }
 
-        private string _selectedAlgorithm;
-        public string SelectedAlgorithm
+        private string? _selectedAlgorithm;
+        public string? SelectedAlgorithm
         {
             get => _selectedAlgorithm;
             set
@@ -111,8 +111,8 @@ namespace Vision_OpenCV_App
             }
         }
 
-        private AlgorithmParameters _currentParameters;
-        public AlgorithmParameters CurrentParameters
+        private AlgorithmParameters? _currentParameters;
+        public AlgorithmParameters? CurrentParameters
         {
             get => _currentParameters;
             set { _currentParameters = value; OnPropertyChanged(); }  // 원본
@@ -143,7 +143,9 @@ namespace Vision_OpenCV_App
                 "Geometric Transformation",
                 "Affine Transform",
                 "Perspective Transform",
-                "Lens Distortion (Remap)" 
+                "Lens Distortion (Remap)",
+                "Camera Calibration",
+
             };
         }
 
@@ -157,7 +159,7 @@ namespace Vision_OpenCV_App
                 DisplayImage = _cvServices.GetProcessedImage();
         }
 
-        private void CreateParametersForAlgorithm(string algoName)
+        private void CreateParametersForAlgorithm(string? algoName)
         {
             // 선택된 이름에 따라 적절한 설정 클래스 생성
             switch (algoName)
@@ -208,6 +210,10 @@ namespace Vision_OpenCV_App
                     CurrentParameters = new RemapParams();
                     break;
 
+                case "Camera Calibration":
+                    CurrentParameters = new CameraCalibrationParams();
+                    break;
+
                 default:
                     CurrentParameters = null; // 설정이 필요 없는 경우
                     break;
@@ -229,7 +235,7 @@ namespace Vision_OpenCV_App
                     await _cvServices.LoadImageAsync(dlg.FileName);
 
                     ShowOriginal = true;
-                    UpdateDisplay();
+                   UpdateDisplay();
                     AnalysisResult = "Image Loaded Successfully.";
                 }
                 catch (Exception ex)
@@ -346,6 +352,63 @@ namespace Vision_OpenCV_App
         // 프로그램 종료 시 호출되어 메모리를 청소합니다.
         public void Cleanup() => _cvServices.Cleanup();
 
+        
+        // [Run Calibration] 버튼 클릭 시 실행
+        // [핵심] 캘리브레이션 실행 함수 (속성창의 버튼과 연결됨)
+        private async void ExecuteCalibrationRun(object obj)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Multiselect = true;
+            dlg.Title = "Select Chessboard Images for Calibration";
+            dlg.Filter = "Image Files|*.bmp;*.jpg;*.png";
+
+            if (dlg.ShowDialog() == true)
+            {
+                try
+                {
+                    IsBusy = true;
+                    AnalysisResult = "Calibrating Camera...";
+
+                    // [수정] UI (CurrentParameters)에서 사용자가 입력한 W, H 값을 가져옵니다.
+                    int w = 9; // 기본값
+                    int h = 6; // 기본값
+
+                    if (CurrentParameters is CameraCalibrationParams param)
+                    {
+                        w = param.PatternWidth;
+                        h = param.PatternHeight;
+                    }
+
+                    // 서비스 함수 호출 (패턴 크기 전달)
+                    double rms = await Task.Run(() => _cvServices.RunCalibration(dlg.FileNames.ToList(), w, h));
+
+                    if (rms >= 0)
+                    {
+                        // 결과값을 UI에 업데이트 (RMS 텍스트)
+                        if (CurrentParameters is CameraCalibrationParams p)
+                        {
+                            p.RmsText = $"RMS Error: {rms:F4}";
+                        }
+
+                        AnalysisResult = $"Calibration Completed. RMS: {rms:F4}";
+                        MessageBox.Show($"캘리브레이션 완료!\nRMS 오차: {rms:F4}\nCalibrationData.json 저장됨.");
+                    }
+                    else
+                    {
+                        AnalysisResult = "Calibration Failed.";
+                        MessageBox.Show($"캘리브레이션 실패: 체스보드 패턴을 찾을 수 없습니다.\n설정된 코너 개수(W:{w}, H:{h})가 맞는지 확인하세요.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error: " + ex.Message);
+                }
+                finally
+                {
+                    IsBusy = false;
+                }
+            }
+        }
 
         // --- Commands ---
         // 버튼과 연결되는 끈(Command)입니다.
@@ -354,6 +417,9 @@ namespace Vision_OpenCV_App
 
         // [신규] 저장 커맨드
         public ICommand SaveProcessedImageCommand => new RelayCommand(SaveProcessedImage);
+
+        // 캘리브레이션 실행 명령
+        public ICommand CalibrateCameraCommand => new RelayCommand(ExecuteCalibrationRun);
 
     }
 

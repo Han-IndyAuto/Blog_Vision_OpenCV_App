@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Windows.Input;
 
 namespace Vision_OpenCV_App
 {
@@ -654,4 +654,52 @@ namespace Vision_OpenCV_App
         public List<DistortionMode> ModeSource { get; } = Enum.GetValues(typeof(DistortionMode)).Cast<DistortionMode>().ToList();
     }
 
+
+    public class CameraCalibrationParams : AlgorithmParameters
+    {
+        // 캘리브레이션 실행 버튼과 연결될 커맨드
+        //public ICommand CalibrateCommand { get; set; }
+
+        // 계산된 RMS 오차를 화면에 보여줄 문자열
+        private string _rmsText = "RMS Error: N/A";
+        public string RmsText
+        {
+            get => _rmsText;
+            set
+            {
+                if (_rmsText == value) return;
+
+                _rmsText = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // 체스보드 가로 내부 코너 개수
+        private int _patternWidth = 9;
+        public int PatternWidth
+        {
+            get => _patternWidth;
+            set 
+            {
+                if (_patternWidth == value) return; 
+
+                _patternWidth = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 체스보드 세로 내부 코너 개수
+        private int _patternHeight = 6;
+        public int PatternHeight
+        {
+            get => _patternHeight;
+            set 
+            {
+                if (_patternHeight == value) return; 
+
+                _patternHeight = value; 
+                OnPropertyChanged();
+            }
+        }
+    }
 }

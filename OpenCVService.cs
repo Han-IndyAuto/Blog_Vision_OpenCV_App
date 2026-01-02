@@ -1,12 +1,14 @@
-﻿using System;
+﻿using OpenCvSharp;
+using OpenCvSharp.WpfExtensions;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
-using OpenCvSharp;
-using OpenCvSharp.WpfExtensions;
 
 namespace Vision_OpenCV_App
 {
@@ -24,11 +26,162 @@ namespace Vision_OpenCV_App
         public float[] LastHistogramData { get; private set; }
         public int LastHistogramChannel { get; private set; }
 
+        // Calibration Data memory cache
+        private CalibrationData _calibData;
+        private Mat _cameraMatrixMat;
+        private Mat _distCoeffsMat;
+
+        private const string CalibFileName = "calibration.json";
+
+        public bool IsCalibrated => _calibData != null;
+
 
         // 생성자.
         public OpenCVService()
         {
+            LoadCalibrationData(CalibFileName);
         }
+
+        // 1. 캘리브레이션 실행 함수
+        public double RunCalibration(List<string> filePaths, int patternW, int patternH)
+        {
+            // 체스보드 코너 좌표들을 담을 리스트
+            List<Mat> objectPoints = new List<Mat>();
+            List<Mat> imagePoints = new List<Mat>();
+
+            // 체스보드의 3D 좌표 (z=0) 생성
+            List<Point3f> objP = new List<Point3f>();
+            for (int i = 0; i < patternH; i++)
+            {
+                for (int j = 0; j < patternW; j++)
+                    objP.Add(new Point3f(j, i, 0));
+            }
+            Mat objPointsMat = InputArray.Create(objP).GetMat();
+
+            OpenCvSharp.Size imageSize = new OpenCvSharp.Size();
+            int successCount = 0;
+            OpenCvSharp.Size patternSize = new OpenCvSharp.Size(patternW, patternH);
+
+            foreach (var path in filePaths)
+            {
+                using (Mat img = Cv2.ImRead(path, ImreadModes.Grayscale))
+                {
+                    if (img.Empty()) continue;
+                    imageSize = img.Size();
+
+                    Point2f[] corners;
+                    // 체스보드 코너 찾기
+                    bool found = Cv2.FindChessboardCorners(img, patternSize, out corners);
+
+                    if (found)
+                    {
+                        // 코너 위치 정밀화 (SubPixel)
+                        Cv2.CornerSubPix(img, corners, new OpenCvSharp.Size(11, 11), new OpenCvSharp.Size(-1, -1),
+                            new TermCriteria(CriteriaTypes.Eps | CriteriaTypes.Count, 30, 0.1));
+
+                        imagePoints.Add(InputArray.Create(corners).GetMat());
+                        objectPoints.Add(objPointsMat);
+                        successCount++;
+                    }
+                }
+            }
+
+            if (successCount < 1) return -1.0; // 실패 시 -1 리턴
+
+            // 카메라 캘리브레이션 수행
+            Mat camMat = new Mat();
+            Mat distCoeffs = new Mat();
+            Mat[] rvecs, tvecs;
+
+            double rms = Cv2.CalibrateCamera(objectPoints, imagePoints, imageSize, camMat, distCoeffs,
+                out rvecs, out tvecs);
+
+            // 결과 저장 (1차원 배열 변환)
+            double[] cameraMatrixArray = new double[9];
+            double[] distCoeffsArray = new double[distCoeffs.Rows * distCoeffs.Cols];
+
+            Marshal.Copy(camMat.Data, cameraMatrixArray, 0, cameraMatrixArray.Length);
+            Marshal.Copy(distCoeffs.Data, distCoeffsArray, 0, distCoeffsArray.Length);
+
+            _calibData = new CalibrationData
+            {
+                CameraMatrix = cameraMatrixArray,
+                DistCoeffs = distCoeffsArray,
+                ImageWidth = imageSize.Width,
+                ImageHeight = imageSize.Height
+            };
+
+            // 외부 CalibrationData 클래스 사용하여 저장
+            _calibData.Save(CalibFileName);
+
+            // Mat 객체 갱신
+            UpdateCalibrationMatrices();
+
+            return rms; // RMS 오차 반환
+        }
+
+        private void LoadCalibrationData(string path)
+        {
+            var data = CalibrationData.Load(path);
+            if (data != null)
+            {
+                _calibData = data;
+                UpdateCalibrationMatrices();
+            }
+        }
+
+        private void UpdateCalibrationMatrices()
+        {
+            if (_calibData == null) return;
+
+            // 1. 카메라 매트릭스 (3x3)
+            _cameraMatrixMat = new Mat(3, 3, MatType.CV_64FC1);
+            Marshal.Copy(_calibData.CameraMatrix, 0, _cameraMatrixMat.Data, _calibData.CameraMatrix.Length);
+
+            // 2. 왜곡 계수 (Nx1)
+            _distCoeffsMat = new Mat(_calibData.DistCoeffs.Length, 1, MatType.CV_64FC1);
+            Marshal.Copy(_calibData.DistCoeffs, 0, _distCoeffsMat.Data, _calibData.DistCoeffs.Length);
+        }
+
+
+        // 2. 왜곡 보정 적용 함수
+        // isCorrected가 true면 Undistort 수행, false면 원본 리턴
+        public void ApplyLensCorrection(bool isCorrected)
+        {
+            if (_srcImage == null) return;
+
+            if (isCorrected && IsCalibrated && _cameraMatrixMat != null && _distCoeffsMat != null)
+            {
+                Mat undistorted = new Mat();
+                // 원본 매트릭스 사용하여 비율 유지
+                Cv2.Undistort(_srcImage, undistorted, _cameraMatrixMat, _distCoeffsMat, _cameraMatrixMat);
+
+                if (_destImage != null) _destImage.Dispose();
+                _destImage = undistorted;
+            }
+            else
+            {
+                if (_destImage != null) _destImage.Dispose();
+                _destImage = _srcImage.Clone();
+            }
+            UpdateCachedImages();
+        }
+
+        // 화면 갱신용 헬퍼
+        private void UpdateCachedImages()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                // 원본은 그대로 유지하거나 필요 시 업데이트
+                // _cachedOriginal = _srcImage.ToWriteableBitmap(); 
+
+                // 결과 이미지 갱신
+                _cachedProcessed = _destImage.ToWriteableBitmap();
+            });
+        }
+
+
+
 
 
         public void CropImage(int x, int y, int w, int h)
@@ -88,7 +241,7 @@ namespace Vision_OpenCV_App
             });
         }
 
-        public async Task<string> ProcessImageAsync(string algorithm, AlgorithmParameters parameters)
+        public async Task<string> ProcessImageAsync(string algorithm, AlgorithmParameters? parameters)
         {
             if (_srcImage == null || _srcImage.IsDisposed) return "Non Image";
             string resultMessage = "Processing Complete";
@@ -106,6 +259,7 @@ namespace Vision_OpenCV_App
 
                 switch (algorithm)
                 {
+
                     case "Threshold":
                         if (parameters is ThresholdParams thParams)
                         {
@@ -612,6 +766,18 @@ namespace Vision_OpenCV_App
 #endif
                         break;
 
+                    case "Camera Calibration":
+                        if (IsCalibrated && _cameraMatrixMat != null && _distCoeffsMat != null)
+                        {
+                            // Apply 버튼 클릭 시: 왜곡 보정 수행
+                            Cv2.Undistort(_srcImage, _destImage, _cameraMatrixMat, _distCoeffsMat, _cameraMatrixMat);
+                            resultMessage = "Undistort Applied (Calibration Data Used)";
+                        }
+                        else
+                        {
+                            resultMessage = "Error: No Calibration Data. Please calibrate first.";
+                        }
+                        break;
                 }
             });
 

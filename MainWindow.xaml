@@ -59,7 +59,7 @@
     실제 프로그램이 돌아갈 때는 이 가짜 데이터가 필요 없으므로, 
     **"이건 개발할 때만 보는 거니까 실행할 땐 신경 끄고 에러 내지 마"**라고 컴퓨터에게 알려주는 것입니다.
     -->
-    
+
 
     <Window.Resources>
 
@@ -70,7 +70,7 @@
             <Setter Property="Stroke" Value="Black" />
             <Setter Property="Visibility" Value="Collapsed" />
         </Style>
-        
+
         <ContextMenu x:Key="DrawingContextMenu" >
             <MenuItem Header="Draw Roi (관심 영역)" Click="Menu_DrawRoi_Click" />
             <Separator />
@@ -143,7 +143,7 @@
                 <ComboBox ItemsSource="{Binding ThresholdTypesSource}" 
                           SelectedItem="{Binding ThresholdType}"
                           Margin="0,2,0,0" Height="25"/>
-                
+
                 <TextBlock Text="Adaptive Threshold Settings" Margin="0,0,0,5" FontWeight="Bold"/>
                 <TextBlock Text="Block Size (홀수만 가능)" Margin="0,5,0,0"/>
 
@@ -466,6 +466,56 @@
             </StackPanel>
         </DataTemplate>
 
+
+        <!--CameraCalibrationParams-->
+        <DataTemplate DataType="{x:Type local:CameraCalibrationParams}">
+            <StackPanel>
+                <TextBlock Text="[ Camera Calibration ]" Margin="0,0,0,10" FontWeight="Bold" Foreground="#333"/>
+
+                <TextBlock Text="1. Chessboard Settings" FontWeight="SemiBold"/>
+                <Grid Margin="0,5,0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Corners W (Col)" FontSize="10" Foreground="Gray"/>
+                        <TextBox Text="{Binding PatternWidth}" TextAlignment="Center" Height="25" VerticalContentAlignment="Center"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Corners H (Row)" FontSize="10" Foreground="Gray"/>
+                        <TextBox Text="{Binding PatternHeight}" TextAlignment="Center" Height="25" VerticalContentAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+                <TextBlock Text="* 내부 코너 점의 개수를 입력하세요 (예: 10x7 체스판 -> 9, 6)" FontSize="10" Foreground="Red" Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+                <TextBlock Text="2. Run Calibration" FontWeight="SemiBold"/>
+
+                <!--RelativeSource AncestorType=Window: "내 족보를 거슬러 올라가서 부모 윈도우(MainWindow)를 찾아라."-->
+                <!--DataContext: "그 윈도우가 가지고 있는 데이터(MainViewModel)를 내놔라."-->
+                <!--.CalibrateCameraCommand: "그 안에 있는 CalibrateCameraCommand를 실행해라."-->
+                <Button Content="Select Images &amp; Run" 
+                        Command="{Binding DataContext.CalibrateCameraCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                        Height="35" Margin="0,5,0,10" Background="#E1E1E1"/>
+                
+                <TextBlock Text="3. Result (RMS Error)" FontWeight="SemiBold"/>
+                <Border BorderBrush="Gray" BorderThickness="1" Background="#F9F9F9" Margin="0,5,0,15" Padding="5">
+                    <TextBlock Text="{Binding RmsText}" 
+                               HorizontalAlignment="Center" FontWeight="Bold" Foreground="Blue"/>
+                </Border>
+
+                <Separator Margin="0,0,0,10"/>
+
+                <TextBlock Text="4. Apply Correction" FontWeight="SemiBold"/>
+                <TextBlock Text="- Load a distorted image." FontSize="11" Foreground="Gray"/>
+                <TextBlock Text="- Click 'Apply' button below." FontSize="11" Foreground="Gray"/>
+            </StackPanel>
+        </DataTemplate>
+
+
         <DataTemplate DataType="{x:Type local:AlgorithmParameters}">
             <TextBlock Text="설정 가능한 속성이 없습니다."
                 Foreground="Gray"
@@ -477,7 +527,7 @@
     <Window.DataContext>
         <local:MainViewModel/>
     </Window.DataContext>
-    
+
     <Grid Background="#F0F0F0">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -683,7 +733,7 @@
         </Grid>
 
 
-        
+
         <StatusBar Grid.Row="1" Background="White" BorderBrush="Gray" BorderThickness="0,1,0,0">
             <StatusBarItem Content="{Binding AnalysisResult}" FontWeight="Bold" Foreground="Blue" />
 
@@ -694,7 +744,7 @@
                 </StackPanel>
             </StatusBarItem>
         </StatusBar>
-        
-        
+
+
     </Grid>
 </Window>
