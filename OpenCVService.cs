@@ -778,6 +778,38 @@ namespace Vision_OpenCV_App
                             resultMessage = "Error: No Calibration Data. Please calibrate first.";
                         }
                         break;
+
+                    case "Manual Filter":
+                        if (parameters is ManualFilterParams filterParams)
+                        {
+                            // kernel 행렬 생성 : Mat 클래스의 생성자가 public이 아니라서 외부에서 직접 호출 할수 없어 using Marshal로 데이터 복사.
+                            // 먼저 Mat 객체 (kernel)를 생성한 후, Marshal.Copy를 사용하여 float 배열 데이터를 Mat의 Data 포인터로 복사합니다.
+                            using (Mat kernel = new Mat(3, 3, MatType.CV_32F))
+                            {
+                                Marshal.Copy(filterParams.KernelData, 0, kernel.Data, filterParams.KernelData.Length);
+                                OpenCvSharp.Point anchor = new OpenCvSharp.Point(filterParams.AnchorX, filterParams.AnchorY);
+
+                                // ddepth 결정 (Edge 검출 시 음수 표현을 위해 16S 사용)
+                                MatType ddepth = -1; // 기본값
+                                if(filterParams.SelectedKernelType == FilterKernelType.Edge)
+                                    ddepth = MatType.CV_16S;
+
+                                using (Mat tempDst = new Mat())
+                                {
+                                    Cv2.Filter2D(_srcImage, tempDst, ddepth, kernel, anchor, filterParams.Delta, filterParams.BorderType);
+
+                                    // 결과 처리 (음수 값 처리)
+                                    if(ddepth == MatType.CV_16S)
+                                        Cv2.ConvertScaleAbs(tempDst, _destImage);
+                                    else
+                                        tempDst.CopyTo(_destImage);
+                                }
+                            }
+                            resultMessage += $": {filterParams.SelectedKernelType} Filter";
+                        }
+                        break;
+
+
                 }
             });
 

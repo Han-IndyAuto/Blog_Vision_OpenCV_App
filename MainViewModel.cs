@@ -145,6 +145,7 @@ namespace Vision_OpenCV_App
                 "Perspective Transform",
                 "Lens Distortion (Remap)",
                 "Camera Calibration",
+                "Manual Filter",
 
             };
         }
@@ -212,6 +213,10 @@ namespace Vision_OpenCV_App
 
                 case "Camera Calibration":
                     CurrentParameters = new CameraCalibrationParams();
+                    break;
+
+                case "Manual Filter":
+                    CurrentParameters = new ManualFilterParams();
                     break;
 
                 default:

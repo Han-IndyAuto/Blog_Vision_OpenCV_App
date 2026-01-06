@@ -702,4 +702,166 @@ namespace Vision_OpenCV_App
             }
         }
     }
+
+
+    // Manual Filter parameter (Filter2D)
+    public enum FilterKernelType
+    {
+        Blur,
+        Edge,
+        Sharpen,
+    }
+
+    public class ManualFilterParams : AlgorithmParameters
+    {
+        private FilterKernelType _selectedKernelType = FilterKernelType.Blur;
+        public FilterKernelType SelectedKernelType
+        {
+            get => _selectedKernelType;
+            set
+            {
+                if (_selectedKernelType == value) return;
+
+                _selectedKernelType = value;
+                UpdateKernelValue();
+                OnPropertyChanged();
+            }
+        }
+
+        private string _kernelInfo = "";
+        public string KernelInfo
+        {
+            get => _kernelInfo;
+            private set
+            {
+                if (_kernelInfo == value) return;
+
+                _kernelInfo = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // 실제 연산에 사용할 커널 데이터 배열
+        public float[] KernelData { get; private set; }
+
+        private string _ddepthInfo = "CV_8U";
+        public string DDepthInfo
+        {
+            get => _ddepthInfo;
+            private set
+            {
+                if (_ddepthInfo == value) return;
+
+                _ddepthInfo = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private int _anchorX = -1;
+        public int AnchorX
+        {
+            get => _anchorX;
+            set
+            {
+                if (_anchorX == value) return;
+
+                _anchorX = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private int _anchorY = -1;
+        public int AnchorY
+        {
+            get => _anchorY;
+            set
+            {
+                if (_anchorY == value) return;
+
+                _anchorY = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _delta = 0.0;
+        public double Delta
+        {
+            get => _delta;
+            set
+            {
+                if (_delta == value) return;
+
+                _delta = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private BorderTypes _borderType = BorderTypes.Default;
+        public BorderTypes BorderType
+        {
+            get => _borderType;
+            set
+            {
+                if (_borderType == value) return;
+
+                _borderType = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public List<FilterKernelType> KernelTypeSource { get; } = Enum.GetValues(typeof(FilterKernelType))  // FilterKernelType 안에 정의된 모든 값(Blur, Edge, Sharpen)을 가져옴 (Array 형태)
+            .Cast<FilterKernelType>()       // 가져온 값들을 명확하게 FilterKernelType이라는 구체적인 자료형으로 변환
+            .ToList();                      // 최종적으로 WPF가 가장 잘 다루는 컬렉션 형태인 List로 변환하여 저장
+        public List<BorderTypes> BorderTypeSource { get; } = Enum.GetValues(typeof(BorderTypes)).Cast<BorderTypes>().ToList();
+
+        public ManualFilterParams()
+        {
+            UpdateKernelValue();
+        }
+
+
+
+        private void UpdateKernelValue()
+        {
+            switch (_selectedKernelType)
+            {
+                case FilterKernelType.Blur:
+                    // 3x3 Average Blur (Sum=1)
+                    KernelData = new float[] {
+                        1/9f, 1/9f, 1/9f,
+                        1/9f, 1/9f, 1/9f,
+                        1/9f, 1/9f, 1/9f
+                    };
+                    KernelInfo = "[[1/9, 1/9, 1/9]\n [1/9, 1/9, 1/9]\n [1/9, 1/9, 1/9]]";
+                    DDepthInfo = "CV_8U (-1)";
+                    break;
+
+                case FilterKernelType.Edge:
+                    // Strong Edge (Sum=0, 8-neighbors)
+                    // 대각선 방향까지 포함하여 8방향 엣지를 검출합니다.
+                    KernelData = new float[] {
+                         -1, -1, -1,
+                         -1,  8, -1,
+                         -1, -1, -1
+                    };
+                    KernelInfo = "[[-1, -1, -1]\n [-1,  8, -1]\n [-1, -1, -1]]";
+                    DDepthInfo = "CV_16S"; // 음수 표현 필요
+                    break;
+
+                case FilterKernelType.Sharpen:
+                    // Strong Sharpening (Sum=1, 8-neighbors)
+                    // 8방향의 데이터를 뺌으로써 더욱 날카로운 느낌을 줍니다.
+                    KernelData = new float[] {
+                        -1, -1, -1,
+                        -1,  9, -1,
+                        -1, -1, -1
+                    };
+                    KernelInfo = "[[-1, -1, -1]\n [-1,  9, -1]\n [-1, -1, -1]]";
+                    DDepthInfo = "CV_8U (-1)";
+                    break;
+            }
+        }
+    }
+
+
 }
