@@ -525,6 +525,133 @@
             </StackPanel>
         </DataTemplate>
 
+        <!--AutoFilterParams 템플릿-->
+        <DataTemplate DataType="{x:Type local:AutoFilterParams}">
+            <StackPanel>
+                <TextBlock Text="Auto Filter Settings" Margin="0,0,0,5" FontWeight="Bold"/>
+
+                <!-- 필터 종류 선택 -->
+                <TextBlock Text="Filter Algorithm" Margin="0,5,0,0"/>
+                <ComboBox ItemsSource="{Binding FilterTypeSource}"
+                  SelectedItem="{Binding SelectedFilterType}"
+                  Margin="0,2,0,0" Height="25"/>
+
+                <Separator Margin="0,10,0,10"/>
+
+                <!-- 공통 Kernel Size (Bilateral 제외) -->
+                <!-- DataTrigger를 사용하여 Bilateral일 때는 숨기기 -->
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedFilterType}" Value="BilateralFilter">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <TextBlock Text="Kernel Size (ksize)" Margin="0,5,0,0"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- 커널 크기는 홀수여야 함. SmallChange=2로 설정 -->
+                        <Slider Grid.Column="0" Minimum="1" Maximum="31" Value="{Binding KernelSize}" 
+                        VerticalAlignment="Center" TickFrequency="2" IsSnapToTickEnabled="True" SmallChange="2" LargeChange="2"/>
+                        <TextBox Grid.Column="1" Text="{Binding KernelSize}" Margin="5,0,0,0" TextAlignment="Center" />
+                    </Grid>
+                    <TextBlock Text="* 홀수 값만 가능 (1, 3, 5...)" FontSize="10" Foreground="Gray"/>
+                </StackPanel>
+
+                <!-- Gaussian Blur 추가 옵션 -->
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedFilterType}" Value="GaussianBlur">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <TextBlock Text="Sigma X" Margin="0,5,0,0"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider Grid.Column="0" Minimum="0.1" Maximum="10.0" Value="{Binding SigmaX}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{Binding SigmaX, StringFormat=F1}" Margin="5,0,0,0" TextAlignment="Center" />
+                    </Grid>
+
+                    <TextBlock Text="Sigma Y" Margin="0,5,0,0"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider Grid.Column="0" Minimum="0.0" Maximum="10.0" Value="{Binding SigmaY}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{Binding SigmaY, StringFormat=F1}" Margin="5,0,0,0" TextAlignment="Center" />
+                    </Grid>
+                    <TextBlock Text="* SigmaY = 0이면 SigmaX와 동일" FontSize="10" Foreground="Gray"/>
+                </StackPanel>
+
+                <!-- Bilateral Filter 옵션 -->
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedFilterType}" Value="BilateralFilter">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <TextBlock Text="Diameter (d)" Margin="0,5,0,0"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider Grid.Column="0" Minimum="1" Maximum="20" Value="{Binding Diameter}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{Binding Diameter}" Margin="5,0,0,0" TextAlignment="Center" />
+                    </Grid>
+                    <TextBlock Text="* 이웃 픽셀 지름" FontSize="10" Foreground="Gray"/>
+
+                    <TextBlock Text="Sigma Color" Margin="0,5,0,0"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider Grid.Column="0" Minimum="10" Maximum="150" Value="{Binding SigmaColor}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{Binding SigmaColor, StringFormat=F0}" Margin="5,0,0,0" TextAlignment="Center" />
+                    </Grid>
+                    <TextBlock Text="* 색상 공간 표준편차" FontSize="10" Foreground="Gray"/>
+
+                    <TextBlock Text="Sigma Space" Margin="0,5,0,0"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider Grid.Column="0" Minimum="10" Maximum="150" Value="{Binding SigmaSpace}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{Binding SigmaSpace, StringFormat=F0}" Margin="5,0,0,0" TextAlignment="Center" />
+                    </Grid>
+                    <TextBlock Text="* 좌표 공간 표준편차" FontSize="10" Foreground="Gray"/>
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+        
+        
+        
         <!--CameraCalibrationParams-->
         <DataTemplate DataType="{x:Type local:CameraCalibrationParams}">
             <StackPanel>

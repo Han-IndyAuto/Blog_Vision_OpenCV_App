@@ -863,5 +863,123 @@ namespace Vision_OpenCV_App
         }
     }
 
+    // Auto Filter Parameters
+    public enum AutoFilterType
+    {
+        AverageBlur,        // Cv2.Blur
+        BoxFilter,          // Cv2.BoxFilter
+        GaussianBlur,       // Cv2.GaussianBlur
+        MedianBlur,         // Cv2.MedianBlur
+        BilateralFilter     // Cv2.BilateralFilter
+    }
+
+    public class AutoFilterParams : AlgorithmParameters
+    {
+        private AutoFilterType _selectedFilterType = AutoFilterType.AverageBlur;
+        public AutoFilterType SelectedFilterType
+        {
+            get => _selectedFilterType;
+            set
+            {
+                if (_selectedFilterType == value) return;
+
+                _selectedFilterType = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Kernel Size (for Blur, BoxFilter, GaussianBlur, MedianBlur)
+        private int _kernelSize = 3;
+        public int KernelSize
+        {
+            get => _kernelSize;
+            set
+            {
+                if(value == _kernelSize) return;
+
+                // 커널 크기는 홀수만 허용 (3,5,7,...)
+                if (value % 2 == 0) value++;
+                if (value < 1) value = 1;
+
+                _kernelSize = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Gaussian Blur 전용.
+        private double _sigmaX = 1.0;
+        public double SigmaX
+        {
+            get => _sigmaX;
+            set
+            {
+                if (_sigmaX == value) return;
+
+                _sigmaX = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _sigmaY = 0.0;
+        public double SigmaY
+        {
+            get => _sigmaY;
+            set
+            {
+                if (_sigmaY == value) return;
+
+                _sigmaY = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Bilateral Filter 전용
+        private int _diameter = 9; // 필터링에 사용될 이웃 픽셀의 지름 (음수면 sigmaSpace로 계산)
+        public int Diameter
+        {
+            get => _diameter;
+            set 
+            {
+                if (_diameter == value) return; 
+
+                _diameter = value; 
+                OnPropertyChanged(); 
+            }
+        }
+
+        private double _sigmaColor = 75.0; // 색공간 표준편차 (클수록 색 차이가 큰 픽셀도 섞임)
+        public double SigmaColor
+        {
+            get => _sigmaColor;
+            set 
+            {
+                if (_sigmaColor == value) return; 
+                
+                _sigmaColor = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        private double _sigmaSpace = 75.0; // 좌표공간 표준편차 (클수록 멀리 있는 픽셀도 영향을 줌)
+        public double SigmaSpace
+        {
+            get => _sigmaSpace;
+            set 
+            {
+                if (_sigmaSpace == value) return; 
+
+                _sigmaSpace = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        public List<AutoFilterType> FilterTypeSource { get; } = Enum.GetValues(typeof(AutoFilterType))
+            .Cast<AutoFilterType>()
+            .ToList();
+
+    }
+
+
+
 
 }

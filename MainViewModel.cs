@@ -146,6 +146,7 @@ namespace Vision_OpenCV_App
                 "Lens Distortion (Remap)",
                 "Camera Calibration",
                 "Manual Filter",
+                "Auto Filter",
 
             };
         }
@@ -217,6 +218,10 @@ namespace Vision_OpenCV_App
 
                 case "Manual Filter":
                     CurrentParameters = new ManualFilterParams();
+                    break;
+
+                case "Auto Filter":
+                    CurrentParameters = new AutoFilterParams();
                     break;
 
                 default:

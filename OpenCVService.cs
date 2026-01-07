@@ -809,6 +809,55 @@ namespace Vision_OpenCV_App
                         }
                         break;
 
+                    case "Auto Filter":
+                        if (parameters is AutoFilterParams autoParams)
+                        {
+                            int k = autoParams.KernelSize;
+
+                            switch (autoParams.SelectedFilterType)
+                            {
+                                case AutoFilterType.AverageBlur:
+                                    // 가장 기본적인 평균 블러
+                                    Cv2.Blur(_srcImage, _destImage, new OpenCvSharp.Size(k, k));
+                                    resultMessage += $": Blur (Kernel: {k}x{k})";
+                                    break;
+
+                                case AutoFilterType.BoxFilter:
+                                    // BoxFilter (normalized=true이면 Blur와 동일)
+                                    // ddepth = -1 (입력과 동일)
+                                    Cv2.BoxFilter(_srcImage, _destImage, -1, new OpenCvSharp.Size(k, k), normalize: true);
+                                    resultMessage += $": BoxFilter (Kernel: {k}x{k})";
+                                    break;
+
+                                case AutoFilterType.GaussianBlur:
+                                    // Gaussian Blur
+                                    Cv2.GaussianBlur(_srcImage, _destImage, new OpenCvSharp.Size(k, k),
+                                        autoParams.SigmaX, autoParams.SigmaY);
+                                    resultMessage += $": Gaussian (Kernel: {k}x{k}, Sigma: {autoParams.SigmaX:F1}/{autoParams.SigmaY:F1})";
+                                    break;
+
+                                case AutoFilterType.MedianBlur:
+                                    // Median Blur (소금후추 노이즈 제거에 탁월)
+                                    // ksize는 1보다 큰 홀수여야 함
+                                    if (k % 2 == 0) k++;
+                                    if (k < 1) k = 1;
+
+                                    Cv2.MedianBlur(_srcImage, _destImage, k);
+                                    resultMessage += $": Median (Kernel: {k})";
+                                    break;
+
+                                case AutoFilterType.BilateralFilter:
+                                    // Bilateral Filter (엣지 보존 스무딩)
+                                    // 매우 느릴 수 있으므로 주의. srcImage가 Color여야 함.
+                                    Cv2.BilateralFilter(_srcImage, _destImage,
+                                        autoParams.Diameter,
+                                        autoParams.SigmaColor,
+                                        autoParams.SigmaSpace);
+                                    resultMessage += $": Bilateral (d:{autoParams.Diameter}, sColor:{autoParams.SigmaColor}, sSpace:{autoParams.SigmaSpace})";
+                                    break;
+                            }
+                        }
+                        break;
 
                 }
             });

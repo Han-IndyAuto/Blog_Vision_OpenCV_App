@@ -2,6 +2,19 @@
 ---
 
 
+## 📅 2026년 01월 07일 (First Commit)
+**작성자:** indy  
+**검토자:** indy
+
+### 1. 개요
+- Blog 게시물 작성 코드: WPF와 OpenCV를 활용한 비전 프로그램 개발 방법 소개
+
+### 2. 진행 내용
+- WPF 기반의 OpenCV 영상처리 프로젝트 #30 적용. 
+- 영상 필터링 에서 Average Blur, Box Filter, Gaussian Blur, Median Blur, Bilateral Filter 에 대해 OpenCV 함수 사용하여 구현.
+- AutoFilterParameters 클래스 추가하여 필터 파라미터 관리.
+
+---
 
 
 ## 📅 2026년 01월 06일 (First Commit)
