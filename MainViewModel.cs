@@ -147,6 +147,7 @@ namespace Vision_OpenCV_App
                 "Camera Calibration",
                 "Manual Filter",
                 "Auto Filter",
+                "Edge Detection",
 
             };
         }
@@ -222,6 +223,10 @@ namespace Vision_OpenCV_App
 
                 case "Auto Filter":
                     CurrentParameters = new AutoFilterParams();
+                    break;
+
+                case "Edge Detection":
+                    CurrentParameters = new EdgeDetectionParams();
                     break;
 
                 default:

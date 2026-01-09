@@ -859,6 +859,209 @@ namespace Vision_OpenCV_App
                         }
                         break;
 
+
+                    case "Edge Detection":
+                        if (parameters is EdgeDetectionParams edgeParams)
+                        {
+                            #region First Version
+                            /*
+                            using (Mat gray = new Mat())
+                            {
+                                // 1. 그레이스케일 변환
+                                Cv2.CvtColor(_srcImage, gray, ColorConversionCodes.BGR2GRAY);
+
+                                switch (edgeParams.SelectedType)
+                                {
+                                    case EdgeDetectionType.BasicDifferential:
+
+                                        // 기본 미분 필터 (Sobel과 유사, 단순 인접 픽셀 차이 커널)
+                                        // OpenCvSharp4 버전부터는 Mat 생성자에 직접 C# 배열(Array)을 전달하는 방식이 protected 또는 internal로 변경되어 외부에서 직접 호출할 수 없음.
+                                        //using (Mat kernelX = new Mat(3, 3, MatType.CV_32F, new float[] { 0, 0, 0, -1, 1, 0, 0, 0, 0 }))
+
+                                        using (Mat kernelX = new Mat(3, 3, MatType.CV_32F))
+                                        using (Mat kernelY = new Mat(3, 3, MatType.CV_32F))
+                                        {
+                                            float[] dataX = { 0, 0, 0, -1, 1, 0, 0, 0, 0 };
+                                            float[] dataY = { 0, -1, 0, 0, 1, 0, 0, 0, 0 };
+                                            Marshal.Copy(dataX, 0, kernelX.Data, dataX.Length);
+                                            Marshal.Copy(dataY, 0, kernelY.Data, dataY.Length);
+
+                                            using (Mat dx = new Mat())
+                                            using (Mat dy = new Mat())
+                                            {
+                                                Cv2.Filter2D(gray, dx, MatType.CV_16S, kernelX);
+                                                Cv2.Filter2D(gray, dy, MatType.CV_16S, kernelY);
+                                                // 절대값 변환 및 합성
+                                                Cv2.AddWeighted(dx.Abs(), 0.5, dy.Abs(), 0.5, 0, _destImage);
+                                            }
+                                        }
+                                        
+                                       break;
+
+                                    case EdgeDetectionType.Roberts:
+                                        // Roberts 교차 미분 필터
+                                        using (Mat kernelX = new Mat(2, 2, MatType.CV_32F))
+                                        using (Mat KernelY = new Mat(2, 2, MatType.CV_32F))
+                                        {
+                                            float[] dataX = { 1, 0, 0, -1 };
+                                            float[] dataY = { 0, 1, -1, 0 };
+                                            Marshal.Copy(dataX, 0, kernelX.Data, dataX.Length);
+                                            Marshal.Copy(dataY, 0, KernelY.Data, dataY.Length);
+                                            using (Mat dx = new Mat())
+                                            using (Mat dy = new Mat())
+                                            {
+                                                Cv2.Filter2D(gray, dx, MatType.CV_16S, kernelX);
+                                                Cv2.Filter2D(gray, dy, MatType.CV_16S, KernelY);
+                                                Cv2.AddWeighted(dx.Abs(), 0.5, dy.Abs(), 0.5, 0, _destImage);
+                                            }
+                                        }
+                                        break;
+
+                                    case EdgeDetectionType.Prewitt:
+                                        // 프리윗 필터
+                                        using (Mat kernelX = new Mat(3, 3, MatType.CV_32F))
+                                        using (Mat kernelY = new Mat(3, 3, MatType.CV_32F))
+                                        {
+                                            float[] dataX = { -1, 0, 1, -1, 0, 1, -1, 0, 1 };
+                                            float[] dataY = { -1, -1, -1, 0, 0, 0, 1, 1, 1 };
+                                            Marshal.Copy(dataX, 0, kernelX.Data, dataX.Length);
+                                            Marshal.Copy(dataY, 0, kernelY.Data, dataY.Length);
+
+                                            using (Mat dx = new Mat())
+                                            using (Mat dy = new Mat())
+                                            {
+                                                Cv2.Filter2D(gray, dx, MatType.CV_16S, kernelX);
+                                                Cv2.Filter2D(gray, dy, MatType.CV_16S, kernelY);
+                                                Cv2.AddWeighted(dx.Abs(), 0.5, dy.Abs(), 0.5, 0, _destImage);
+                                            }
+                                        }
+                                        break;
+
+                                    case EdgeDetectionType.Sobel:
+                                        // 소벨 필터
+                                        using (Mat dx = new Mat())
+                                        using (Mat dy = new Mat())
+                                        {
+                                            Cv2.Sobel(gray, dx, MatType.CV_16S, 1, 0, edgeParams.KSize, edgeParams.Scale, edgeParams.Delta);
+                                            Cv2.Sobel(gray, dy, MatType.CV_16S, 0, 1, edgeParams.KSize, edgeParams.Scale, edgeParams.Delta);
+                                            Cv2.AddWeighted(dx.Abs(), 0.5, dy.Abs(), 0.5, 0, _destImage);
+                                        }
+                                        break;
+
+                                    case EdgeDetectionType.Scharr:
+                                        // 샤르 필터 (소벨보다 정밀함, KSize는 3으로 고정됨)
+                                        using (Mat dx = new Mat())
+                                        using (Mat dy = new Mat())
+                                        {
+                                            Cv2.Scharr(gray, dx, MatType.CV_16S, 1, 0, edgeParams.Scale, edgeParams.Delta);
+                                            Cv2.Scharr(gray, dy, MatType.CV_16S, 0, 1, edgeParams.Scale, edgeParams.Delta);
+                                            Cv2.AddWeighted(dx.Abs(), 0.5, dy.Abs(), 0.5, 0, _destImage);
+                                        }
+                                        break;
+
+                                    case EdgeDetectionType.Laplacian:
+                                        // 6. 라플라시안 (2차 미분)
+                                        using (Mat lap = new Mat())
+                                        {
+                                            Cv2.Laplacian(gray, lap, MatType.CV_16S, edgeParams.KSize, edgeParams.Scale, edgeParams.Delta);
+                                            Cv2.ConvertScaleAbs(lap, _destImage);
+                                        }
+                                        break;
+
+                                    case EdgeDetectionType.Canny:
+                                        // 7. 캐니 엣지
+                                        Cv2.Canny(gray, _destImage, edgeParams.CannyTh1, edgeParams.CannyTh2, edgeParams.KSize);
+                                        break;
+
+                                }
+                            }
+                            */
+                            #endregion
+
+                            #region Second Version
+
+                            using (Mat gray = new Mat())
+                            {
+                                Cv2.CvtColor(_srcImage, gray, ColorConversionCodes.BGR2GRAY);
+
+                                // 사용자가 조절하는 Scale과 Delta
+                                // 팁: 화면이 검게 나오면 Scale을 3.0 ~ 10.0 사이로 높여보세요.
+                                double s = edgeParams.Scale;
+                                double d = edgeParams.Delta;
+
+                                switch (edgeParams.SelectedType)
+                                {
+                                    case EdgeDetectionType.BasicDifferential:
+                                        ApplyCustomEdgeFilter(gray, _destImage,
+                                            new float[] { 0, 0, 0, -1, 1, 0, 0, 0, 0 }, // X
+                                            new float[] { 0, -1, 0, 0, 1, 0, 0, 0, 0 }, // Y
+                                            s, d);
+                                        break;
+
+                                    case EdgeDetectionType.Roberts:
+                                        ApplyCustomEdgeFilter(gray, _destImage,
+                                            new float[] { 1, 0, 0, -1 }, // X
+                                            new float[] { 0, 1, -1, 0 }, // Y
+                                            s, d, 2); // 2x2 Kernel
+                                        break;
+
+                                    case EdgeDetectionType.Prewitt:
+                                        ApplyCustomEdgeFilter(gray, _destImage,
+                                            new float[] { -1, 0, 1, -1, 0, 1, -1, 0, 1 },
+                                            new float[] { -1, -1, -1, 0, 0, 0, 1, 1, 1 },
+                                            s, d);
+                                        break;
+
+                                    case EdgeDetectionType.Sobel:
+                                        using (Mat dx = new Mat())
+                                        using (Mat dy = new Mat())
+                                        using (Mat dx8u = new Mat())
+                                        using (Mat dy8u = new Mat())
+                                        {
+                                            // 16S로 미분 후 사용자의 Scale을 적용하여 8U로 변환
+                                            Cv2.Sobel(gray, dx, MatType.CV_16S, 1, 0, edgeParams.KSize);
+                                            Cv2.Sobel(gray, dy, MatType.CV_16S, 0, 1, edgeParams.KSize);
+                                            Cv2.ConvertScaleAbs(dx, dx8u, s, d);
+                                            Cv2.ConvertScaleAbs(dy, dy8u, s, d);
+                                            Cv2.AddWeighted(dx8u, 1.0, dy8u, 1.0, 0, _destImage);
+                                        }
+                                        break;
+
+                                    case EdgeDetectionType.Scharr:
+                                        using (Mat dx = new Mat())
+                                        using (Mat dy = new Mat())
+                                        using (Mat dx8u = new Mat())
+                                        using (Mat dy8u = new Mat())
+                                        {
+                                            Cv2.Scharr(gray, dx, MatType.CV_16S, 1, 0);
+                                            Cv2.Scharr(gray, dy, MatType.CV_16S, 0, 1);
+                                            Cv2.ConvertScaleAbs(dx, dx8u, s, d);
+                                            Cv2.ConvertScaleAbs(dy, dy8u, s, d);
+                                            Cv2.AddWeighted(dx8u, 1.0, dy8u, 1.0, 0, _destImage);
+                                        }
+                                        break;
+
+                                    case EdgeDetectionType.Laplacian:
+                                        using (Mat lap = new Mat())
+                                        {
+                                            Cv2.Laplacian(gray, lap, MatType.CV_16S, edgeParams.KSize);
+                                            Cv2.ConvertScaleAbs(lap, _destImage, s, d);
+                                        }
+                                        break;
+
+                                    case EdgeDetectionType.Canny:
+                                        Cv2.Canny(gray, _destImage, edgeParams.CannyTh1, edgeParams.CannyTh2, edgeParams.KSize);
+                                        break;
+                                }
+                                resultMessage += $": {edgeParams.SelectedType}";
+                            }
+                        #endregion
+
+                        }
+                        break;
+
+
+
                 }
             });
 
@@ -873,6 +1076,30 @@ namespace Vision_OpenCV_App
             }
 
             return resultMessage;
+        }
+
+        private void ApplyCustomEdgeFilter(Mat src, Mat dst, float[] dataX, float[] dataY, double scale, double delta, int kSize = 3)
+        {
+            using (Mat kX = new Mat(kSize, kSize, MatType.CV_32F))
+            using (Mat kY = new Mat(kSize, kSize, MatType.CV_32F))
+            using (Mat dx = new Mat())
+            using (Mat dy = new Mat())
+            using (Mat dx8u = new Mat())
+            using (Mat dy8u = new Mat())
+            {
+                Marshal.Copy(dataX, 0, kX.Data, dataX.Length);
+                Marshal.Copy(dataY, 0, kY.Data, dataY.Length);
+
+                Cv2.Filter2D(src, dx, MatType.CV_16S, kX);
+                Cv2.Filter2D(src, dy, MatType.CV_16S, kY);
+
+                // 시각화를 위해 Scale 적용 및 절대값 변환
+                Cv2.ConvertScaleAbs(dx, dx8u, scale, delta);
+                Cv2.ConvertScaleAbs(dy, dy8u, scale, delta);
+
+                // 두 결과를 합산 (0.5 대신 1.0을 사용하여 선명도 유지)
+                Cv2.AddWeighted(dx8u, 1.0, dy8u, 1.0, 0, dst);
+            }
         }
 
 

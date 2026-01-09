@@ -2,6 +2,22 @@
 ---
 
 
+## 📅 2026년 01월 09일 (First Commit)
+**작성자:** indy  
+**검토자:** indy
+
+### 1. 개요
+- Blog 게시물 작성 코드: WPF와 OpenCV를 활용한 비전 프로그램 개발 방법 소개
+
+### 2. 진행 내용
+- WPF 기반의 OpenCV 영상처리 프로젝트 #31 적용. 
+- 영상 필터의 Edged Detection Filter 에 7가지 항목에 대해 구현. 
+- BasicDifferential, Roberts, Prewitt, Sobel, Scharr, Laplacian, Canny Edge 
+
+
+---
+
+
 ## 📅 2026년 01월 07일 (First Commit)
 **작성자:** indy  
 **검토자:** indy

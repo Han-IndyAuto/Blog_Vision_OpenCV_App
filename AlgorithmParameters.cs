@@ -979,7 +979,110 @@ namespace Vision_OpenCV_App
 
     }
 
+    public enum EdgeDetectionType
+    {
+        BasicDifferential,  // 기본 미분
+        Roberts,            // Roberts 교차 미분
+        Prewitt,            // Prewitt 미분
+        Sobel,              // Sobel 미분
+        Scharr,             // Scharr 미분
+        Laplacian,           // 라플라시안
+        Canny               // 캐니 엣지 검출
+    }
 
+    public class EdgeDetectionParams : AlgorithmParameters
+    {
+        private EdgeDetectionType _selectedType = EdgeDetectionType.BasicDifferential;
+        public EdgeDetectionType SelectedType
+        {
+            get => _selectedType;
+            set 
+            {
+                if (_selectedType == value) return; 
 
+                _selectedType = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 공통: 커널 크기 (Sobel, Scharr, Laplacian, Canny용)
+        private int _ksize = 3;
+        public int KSize
+        {
+            get => _ksize;
+            set
+            {
+                // Sobel, Laplacian 등은 홀수만 가능 (1, 3, 5, 7)
+                if (value % 2 == 0) value++;
+                if (value < 1) value = 1;
+                if (value > 7) value = 7;
+
+                if (_ksize == value) return; 
+
+                _ksize = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // Canny 전용: Threshold1 (낮은 임계값)
+        private double _cannyTh1 = 50;
+        public double CannyTh1
+        {
+            get => _cannyTh1;
+            set 
+            {
+                if (_cannyTh1 == value) return; 
+                
+                _cannyTh1 = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // Canny 전용: Threshold2 (높은 임계값)
+        private double _cannyTh2 = 150;
+        public double CannyTh2
+        {
+            get => _cannyTh2;
+            set 
+            {
+                if (_cannyTh2 == value) return; 
+
+                _cannyTh2 = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // Sobel/Laplacian 전용: Scale
+        private double _scale = 1.0;
+        public double Scale
+        {
+            get => _scale;
+            set
+            {
+                if (_scale == value) return;
+
+                _scale = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Sobel/Laplacian 전용: Delta
+        private double _delta = 0.0;
+        public double Delta
+        {
+            get => _delta;
+            set 
+            {
+                if (_delta == value) return;
+
+                _delta = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        public List<EdgeDetectionType> EdgeTypeSource { get; } = Enum.GetValues(typeof(EdgeDetectionType))
+            .Cast<EdgeDetectionType>()
+            .ToList();
+    }
 
 }
