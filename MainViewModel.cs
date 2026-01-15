@@ -148,6 +148,7 @@ namespace Vision_OpenCV_App
                 "Manual Filter",
                 "Auto Filter",
                 "Edge Detection",
+                "Morphology",
 
             };
         }
@@ -227,6 +228,10 @@ namespace Vision_OpenCV_App
 
                 case "Edge Detection":
                     CurrentParameters = new EdgeDetectionParams();
+                    break;
+
+                case "Morphology":
+                    CurrentParameters = new MorphologyParams();
                     break;
 
                 default:

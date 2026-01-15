@@ -1060,6 +1060,32 @@ namespace Vision_OpenCV_App
                         }
                         break;
 
+                    case "Morphology":
+                        if (parameters is MorphologyParams mParams)
+                        {
+                            // 1. 커널(구조 요소) 생성
+                            using (Mat kernel = Cv2.GetStructuringElement(mParams.KernelShape, new OpenCvSharp.Size(mParams.KernelSize, mParams.KernelSize)))
+                            {
+                                // 2. 연산 타입 매핑
+                                MorphTypes morphType = MorphTypes.Erode;
+                                switch (mParams.SelectedType)
+                                {
+                                    case MorphologyType.Erode: morphType = MorphTypes.Erode; break;
+                                    case MorphologyType.Dilate: morphType = MorphTypes.Dilate; break;
+                                    case MorphologyType.Opening: morphType = MorphTypes.Open; break;
+                                    case MorphologyType.Closing: morphType = MorphTypes.Close; break;
+                                    case MorphologyType.Gradient: morphType = MorphTypes.Gradient; break;
+                                    case MorphologyType.TopHat: morphType = MorphTypes.TopHat; break;
+                                    case MorphologyType.BlackHat: morphType = MorphTypes.BlackHat; break;
+                                }
+
+                                // 3. 모폴로지 연산 실행
+                                Cv2.MorphologyEx(_srcImage, _destImage, morphType, kernel, iterations: mParams.Iterations);
+
+                                resultMessage += $": {mParams.SelectedType} (Size:{mParams.KernelSize}, Iter:{mParams.Iterations})";
+                            }
+                        }
+                        break;
 
 
                 }

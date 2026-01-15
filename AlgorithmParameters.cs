@@ -1085,4 +1085,85 @@ namespace Vision_OpenCV_App
             .ToList();
     }
 
+    // 모폴로지 연산 종류 열거형
+    public enum MorphologyType
+    {
+        Erode,      // 침식
+        Dilate,     // 팽창
+        Opening,    // 열림
+        Closing,    // 닫힘
+        Gradient,   // 그레디언트 (팽창 - 침식)
+        TopHat,     // 탑햇 (원본 - 열림)
+        BlackHat    // 블랙햇 (닫힘 - 원본)
+    }
+
+    // 모폴로지 연산을 위한 파라미터 클래스
+    public class MorphologyParams : AlgorithmParameters
+    {
+        private MorphologyType _selectedType = MorphologyType.Erode;
+        public MorphologyType SelectedType
+        {
+            get => _selectedType;
+            set 
+            {
+                if (_selectedType == value) return; 
+                
+                _selectedType = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 커널 모양 (사각형, 십자형, 타원형)
+        private MorphShapes _kernelShape = MorphShapes.Rect;
+        public MorphShapes KernelShape
+        {
+            get => _kernelShape;
+            set 
+            {
+                if (_kernelShape == value) return; 
+                
+                _kernelShape = value; 
+                OnPropertyChanged(); 
+            }
+        }
+
+        // 커널 크기
+        private int _kernelSize = 3;
+        public int KernelSize
+        {
+            get => _kernelSize;
+            set
+            {
+                if (value < 1) value = 1;
+
+                if (_kernelSize == value) return; 
+
+                _kernelSize = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        // 반복 횟수
+        private int _iterations = 1;
+        public int Iterations
+        {
+            get => _iterations;
+            set
+            {
+                if (value < 1) value = 1;
+
+                if (_iterations == value) return; 
+
+                _iterations = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        public List<MorphologyType> MorphTypeSource { get; } = Enum.GetValues(typeof(MorphologyType))
+            .Cast<MorphologyType>()
+            .ToList();
+        public List<MorphShapes> KernelShapeSource { get; } = Enum.GetValues(typeof(MorphShapes))
+            .Cast<MorphShapes>()
+            .ToList();
+    }
 }
