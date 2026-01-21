@@ -853,6 +853,25 @@
             </StackPanel>
         </DataTemplate>
 
+        <!-- Image Pyramid 템플릿 -->
+        <DataTemplate DataType="{x:Type local:ImagePyramidParams}">
+            <StackPanel>
+                <TextBlock Text="Image Pyramid Settings" Margin="0,0,0,5" FontWeight="Bold"/>
+
+                <TextBlock Text="Pyramid Type" Margin="0,5,0,0"/>
+                <ComboBox ItemsSource="{Binding PyramidTypeSource}" 
+                          SelectedItem="{Binding SelectedType}"
+                          Margin="0,2,0,0" Height="25"/>
+
+                <TextBlock Text="Border Type (경계면 처리)" Margin="0,10,0,0"/>
+                <ComboBox ItemsSource="{Binding BorderTypeSource}" 
+                          SelectedItem="{Binding BorderType}" 
+                          Margin="0,2,0,0" Height="25"/>
+
+                <TextBlock Text="* Gaussian Down: 이미지 크기를 1/4로 줄이며 노이즈 제거 (가로/세로 1/2)&#x0a;* Gaussian Up: 이미지 크기를 4배로 키우며 블러링 (가로/세로 2배)&#x0a;* Laplacian: 이미지의 고주파(엣지) 성분만 추출" 
+                           Foreground="Gray" FontSize="10" Margin="0,15,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+        </DataTemplate>
 
         <DataTemplate DataType="{x:Type local:AlgorithmParameters}">
             <TextBlock Text="설정 가능한 속성이 없습니다."

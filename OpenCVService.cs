@@ -1087,6 +1087,41 @@ namespace Vision_OpenCV_App
                         }
                         break;
 
+                    case "Image Pyramid":
+                        if(parameters is ImagePyramidParams pParams)
+                        {
+                            switch(pParams.SelectedType)
+                            {
+                                case ImagePyramidType.GaussianDown:
+                                    // 1/2 크기로 축소 및 블러링
+                                    Cv2.PyrDown(_srcImage, _destImage, borderType: pParams.BorderType);
+                                    resultMessage += $": Gaussian Down (Size:{_destImage.Width}x{_destImage.Height})";
+                                    break;
+
+                                case ImagePyramidType.GaussianUp:
+                                    // 2배 크기로 확대 및 블러링
+                                    Cv2.PyrUp(_srcImage, _destImage, borderType: pParams.BorderType);
+                                    resultMessage += $": Gaussian Up (Size: {_destImage.Width}x{_destImage.Height})";
+                                    break;
+
+                                case ImagePyramidType.Laplacian:
+                                    // 라플라시안 피라미드 레이어 추출
+                                    // 원리: 원본 - PyrUp(PyrDown(원본))
+                                    using (Mat down = new Mat())
+                                    using (Mat up = new Mat())
+                                    {
+                                        Cv2.PyrDown(_srcImage, down, borderType: pParams.BorderType);
+                                        // PyrUp 시 원본 사이즈와 일치시키기 위해 세 번째 파라미터 전달
+                                        Cv2.PyrUp(down, up, _srcImage.Size(), borderType: pParams.BorderType);
+
+                                        // 뺄셈 연산 (엣지 성분 추출)
+                                        Cv2.Subtract(_srcImage, up, _destImage);
+                                        resultMessage += ": Laplacian Detail Extracted";
+                                    }
+                                    break;
+                            }
+                        }
+                        break;
 
                 }
             });

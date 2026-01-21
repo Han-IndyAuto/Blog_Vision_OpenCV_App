@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -24,6 +25,10 @@ namespace Vision_OpenCV_App
 
 
         private OpenCVService _cvServices;
+
+        // 상태바 정보 변수
+        private string _originalImageInfo = "";     // 원본 이미지 정보 (파일 명, 크기)
+        private string _lastProcessingResult = "";  // 마지막 알고리즘 처리 결과 정보
 
         #region Properties
 
@@ -73,6 +78,16 @@ namespace Vision_OpenCV_App
                 // [중요] 체크박스를 껐다 켰다 할 때마다 즉시 이미지를 바꿔 끼워줍니다.
                 // (체크됨: 원본 보여줘 / 체크해제: 결과 보여줘)
                 UpdateDisplay();
+
+                // update : 상태바 정보도 갱신
+                if(_showOriginal)
+                {
+                    AnalysisResult = _originalImageInfo;
+                }
+                else
+                {
+                    AnalysisResult = string.IsNullOrEmpty(_lastProcessingResult) ? "No Processing Result yet." : _lastProcessingResult;
+                }
             }
         }
 
@@ -149,6 +164,7 @@ namespace Vision_OpenCV_App
                 "Auto Filter",
                 "Edge Detection",
                 "Morphology",
+                "Image Pyramid",
 
             };
         }
@@ -234,6 +250,10 @@ namespace Vision_OpenCV_App
                     CurrentParameters = new MorphologyParams();
                     break;
 
+                case "Image Pyramid":
+                    CurrentParameters = new ImagePyramidParams();
+                    break;
+
                 default:
                     CurrentParameters = null; // 설정이 필요 없는 경우
                     break;
@@ -254,9 +274,19 @@ namespace Vision_OpenCV_App
                     // 비동기 함수 호출 (await로 기다림, UI 스레드는 자유로움)
                     await _cvServices.LoadImageAsync(dlg.FileName);
 
+                    // 파일 이름 및 이미지 크기 정보 추출
+                    string fileName = Path.GetFileName(dlg.FileName);
+                    int width = _cvServices._srcImage.Width;
+                    int height = _cvServices._srcImage.Height;
+
+                    // 상태바 정보 업데이트
+                    _originalImageInfo = $"Image Loaded Successfully. [{fileName} (W:{width}, H:{height})]";
+                    _lastProcessingResult = ""; // 이미지 로드 시 이전 결과는 초기화
+
                     ShowOriginal = true;
-                   UpdateDisplay();
-                    AnalysisResult = "Image Loaded Successfully.";
+                    UpdateDisplay();
+                    //AnalysisResult = $"Image Loaded Successfully. [{fileName} (W:{width}, H:{height})]";
+                    AnalysisResult = _originalImageInfo;
                 }
                 catch (Exception ex)
                 {
@@ -281,6 +311,9 @@ namespace Vision_OpenCV_App
 
                 // 비동기 처리 호출
                 string result = await _cvServices.ProcessImageAsync(SelectedAlgorithm, CurrentParameters);
+
+                // 상태바 정보 업데이트
+                _lastProcessingResult = result;
 
                 if (result == "This Image is Gray Image.")
                 {
@@ -319,7 +352,11 @@ namespace Vision_OpenCV_App
                 _cvServices.CropImage(x, y, w, h);
                 ShowOriginal = true; // 잘린 이미지가 원본이므로 원본 보기로 전환.
                 UpdateDisplay();
-                AnalysisResult = $"이미지 자르기 완료 (크기:{w} x {h})";
+
+                //AnalysisResult = $"이미지 자르기 완료 (크기:{w} x {h})";
+
+                _originalImageInfo = $"이미지 자르기 완료 (크기:{w} x {h})";
+                AnalysisResult = _originalImageInfo;
             }
             catch (Exception ex)
             {

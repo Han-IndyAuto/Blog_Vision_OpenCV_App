@@ -1166,4 +1166,55 @@ namespace Vision_OpenCV_App
             .Cast<MorphShapes>()
             .ToList();
     }
+
+    // 이미지 피라미드 연산 종류
+    public enum ImagePyramidType
+    {
+        GaussianDown,   // 축소 (PyrDown)
+        GaussianUp,     // 확대 (PyrUp)
+        Laplacian       // 라플라시안 (Original - PyrUp(PyrDown))
+    }
+
+    // 이미지 피라미드 파라미터 클래스
+    public class ImagePyramidParams : AlgorithmParameters
+    {
+        private ImagePyramidType _selectedType = ImagePyramidType.GaussianDown;
+        public ImagePyramidType SelectedType
+        {
+            get => _selectedType;
+            set 
+            {
+                if (_selectedType == value) return; 
+
+                _selectedType = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        private BorderTypes _borderType = BorderTypes.Reflect101;
+        public BorderTypes BorderType
+        {
+            get => _borderType;
+            set 
+            {
+                if (_borderType == value) return; 
+
+                _borderType = value; 
+                OnPropertyChanged();
+            }
+        }
+
+        public List<ImagePyramidType> PyramidTypeSource { get; } = Enum.GetValues(typeof(ImagePyramidType)).Cast<ImagePyramidType>().ToList();
+
+        // C sharp 에서는 Default Reflect 101 만 지원
+        //public List<BorderTypes> BorderTypeSource { get; } = Enum.GetValues(typeof(BorderTypes)).Cast<BorderTypes>().ToList();
+
+        // [해결] Cv2.PyrDown/Up은 오직 BorderTypes.Reflect101(Default) 만 지원합니다.
+        // 다른 타입을 선택하여 발생하는 예외를 방지하기 위해 지원되는 타입만 리스트에 담습니다.
+        public List<BorderTypes> BorderTypeSource { get; } = new List<BorderTypes>
+        {
+            BorderTypes.Reflect101
+        };
+    }
+
 }
